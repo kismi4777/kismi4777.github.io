@@ -1,0 +1,1652 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>НИКИТА БЫЧКОВ — UNITY DEV / TECH ARTIST / 3D GENERALIST</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root {
+  --bg:#070709;
+  --fg:#f3f3f3;
+  --acid:#c9ff19;
+  --cyan:#00f0ff;
+  --orange:#ff8a00;
+  --panel:rgba(16,16,21,0.85);
+  --border:rgba(255,255,255,0.08);
+  --font-mono:'JetBrains Mono',monospace;
+  --font-title:'Space Grotesk',sans-serif}
+* {
+  box-sizing:border-box;
+  margin:0;
+  padding:0}
+button,.btn-mini,.btn-primary,.btn-outline,.upgrade-card,.evolve-btn {
+  user-select:none;
+  -webkit-user-select:none}
+html {
+  scroll-behavior:smooth}
+body {
+  background:var(--bg);
+  color:var(--fg);
+  font-family:var(--font-mono);
+  overflow-x:hidden;
+  line-height:1.4}
+canvas#bg-canvas {
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none}
+.overlay {
+  position:fixed;
+  inset:0;
+  background:radial-gradient(circle at 50% 30%,transparent 0%,rgba(7,7,9,0.9) 80%);
+  z-index:1;
+  pointer-events:none}
+header {
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  height:64px;
+  padding:0 5vw;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  z-index:50;
+  background:rgba(7,7,9,0.85);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border)}
+.brand {
+  font-family:var(--font-title);
+  font-weight:800;
+  font-size:18px;
+  letter-spacing:-0.5px}
+.brand span {
+  color:var(--acid)}
+.nav-actions {
+  display:flex;
+  gap:10px;
+  align-items:center}
+.btn-mini {
+  border:1px solid var(--border);
+  background:#111116;
+  color:#ccc;
+  padding:8px 14px;
+  font-size:11px;
+  font-weight:600;
+  cursor:pointer;
+  text-decoration:none;
+  border-radius:4px;
+  transition:0.2s}
+.btn-mini:hover {
+  border-color:var(--acid);
+  color:var(--acid);
+  transform:translateY(-1px)}
+main {
+  position:relative;
+  z-index:10;
+  width:min(1120px,92vw);
+  margin:0 auto;
+  padding-top:90px}
+section {
+  padding:30px 0}
+/* HERO */
+
+.hero {
+  min-height:72vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center}
+.badge {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-size:11px;
+  color:var(--acid);
+  background:rgba(201,255,25,0.08);
+  border:1px solid rgba(201,255,25,0.25);
+  padding:6px 12px;
+  border-radius:100px;
+  width:fit-content;
+  margin-bottom:16px}
+.badge::before {
+  content:"";
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:var(--acid);
+  box-shadow:0 0 10px var(--acid)}
+h1 {
+  font-family:var(--font-title);
+  font-size:clamp(2.4rem,6.2vw,5.6rem);
+  font-weight:800;
+  line-height:0.95;
+  letter-spacing:-0.04em;
+  text-transform:uppercase;
+  margin-bottom:18px}
+h1 b {
+  color:transparent;
+  -webkit-text-stroke:1px rgba(255,255,255,0.45)}
+.pitch {
+  font-size:clamp(15px,1.5vw,18px);
+  color:#b2b2ba;
+  max-width:760px;
+  line-height:1.5;
+  margin-bottom:26px}
+.pitch b {
+  color:#fff}
+/* METRICS */
+
+.metrics {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:12px;
+  margin-bottom:28px}
+.m-card {
+  background:var(--panel);
+  border:1px solid var(--border);
+  padding:16px 18px;
+  border-radius:6px;
+  backdrop-filter:blur(8px)}
+.m-card .val {
+  font-family:var(--font-title);
+  font-size:28px;
+  font-weight:700;
+  color:var(--acid);
+  line-height:1}
+.m-card .desc {
+  font-size:12px;
+  color:#8a8a95;
+  margin-top:6px}
+.m-card .desc b {
+  color:#ddd}
+/* CTA BUTTONS */
+
+.cta-row {
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:center}
+.btn-primary {
+  background:var(--acid);
+  color:#08080a;
+  padding:12px 24px;
+  font-weight:700;
+  font-size:12px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  text-decoration:none;
+  border-radius:4px;
+  box-shadow:0 0 25px rgba(201,255,25,0.2);
+  transition:0.2s}
+.btn-primary:hover {
+  transform:translateY(-2px);
+  box-shadow:0 0 35px rgba(201,255,25,0.4)}
+.btn-outline {
+  background:transparent;
+  color:#fff;
+  border:1px solid var(--border);
+  padding:12px 20px;
+  font-size:12px;
+  font-weight:600;
+  text-decoration:none;
+  border-radius:4px;
+  transition:0.2s}
+.btn-outline:hover {
+  border-color:#fff;
+  transform:translateY(-2px)}
+/* PIPELINE */
+
+.pipeline-strip {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:12px;
+  margin-top:18px}
+.pipe-box {
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--border);
+  padding:15px;
+  border-radius:6px}
+.pipe-box h3 {
+  font-family:var(--font-title);
+  font-size:13px;
+  color:var(--cyan);
+  margin-bottom:6px;
+  letter-spacing:0.04em}
+.pipe-box p {
+  font-size:11px;
+  color:#888994;
+  line-height:1.5}
+.pipe-box b {
+  color:#eee}
+/* ========================================================
+   INCREMENTAL GAME ENGINE (VIRUS LAB EVOLUTION)
+======================================================== */
+
+.game-section {
+  margin:24px 0 40px}
+.lab-container {
+  position:relative;
+  background:#09090d;
+  border:1px solid var(--border);
+  border-radius:10px;
+  overflow:hidden;
+  box-shadow:0 25px 60px rgba(0,0,0,0.85)}
+/* TOP STATUS HUD */
+
+.lab-hud {
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  padding:14px 20px;
+  background:rgba(14,14,19,0.9);
+  border-bottom:1px solid var(--border);
+  gap:10px}
+.hud-stat-box--right {
+  text-align: right;
+}
+
+.hud-value--cyan {
+  color: var(--cyan) !important;
+}
+
+.hud-stat-box .lbl {
+  font-size:10px;
+  color:#7a7a85;
+  letter-spacing:0.08em;
+  text-transform:uppercase}
+.hud-stat-box .val {
+  font-family:var(--font-title);
+  font-size:clamp(18px,2.8vw,26px);
+  font-weight:800;
+  color:#fff;
+  line-height:1.1}
+.hud-stat-box .val span {
+  color:var(--acid)}
+.hud-rate {
+  font-size:11px;
+  color:var(--cyan);
+  font-weight:600;
+  margin-top:2px}
+.tier-tag {
+  background:#171720;
+  border:1px solid var(--border);
+  padding:6px 14px;
+  border-radius:20px;
+  font-size:11px;
+  font-weight:700;
+  color:var(--acid);
+  letter-spacing:0.05em;
+  text-align:center;
+  white-space:nowrap}
+/* OVERDRIVE BAR */
+
+.overdrive-wrapper {
+  position:relative;
+  height:5px;
+  background:#181820;
+  overflow:hidden}
+.overdrive-fill {
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,var(--cyan),var(--acid));
+  transition:width 0.15s linear;
+  box-shadow:0 0 10px var(--acid)}
+.overdrive-fill.frenzy {
+  background:linear-gradient(90deg,var(--orange),#ff005b);
+  box-shadow:0 0 15px #ff005b}
+/* 3D CORE VIEWPORT */
+
+.core-viewport {
+  position:relative;
+  -webkit-tap-highlight-color:transparent;
+  width:100%;
+  height:370px;
+  background:radial-gradient(circle at 50% 50%,#151722 0%,#08080b 75%);
+  cursor:pointer;
+  touch-action:none;
+  overflow:hidden}
+#game-canvas {
+  width:100%;
+  height:100%;
+  display:block}
+.floating-num {
+  position:absolute;
+  pointer-events:none;
+  font-family:var(--font-title);
+  font-weight:800;
+  font-size:18px;
+  color:var(--acid);
+  text-shadow:0 0 10px rgba(201,255,25,0.7);
+  transform:translate(-50%,-50%);
+  animation:floatUp 0.85s cubic-bezier(0.2,0.8,0.3,1) forwards;
+  z-index:20}
+.floating-num.crit {
+  font-size:24px;
+  color:var(--orange);
+  text-shadow:0 0 14px rgba(255,138,0,0.8)}
+@keyframes floatUp {
+  0% {
+  opacity:1;
+  transform:translate(-50%,-50%) scale(0.8)}
+40% {
+  transform:translate(-50%,-100px) scale(1.2)}
+100% {
+  opacity:0;
+  transform:translate(-50%,-150px) scale(0.9)}
+}
+.frenzy-alert {
+  position:absolute;
+  top:20px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(255,0,91,0.15);
+  border:1px solid #ff005b;
+  color:#ff4d88;
+  padding:5px 16px;
+  border-radius:20px;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.1em;
+  opacity:0;
+  transition:0.3s;
+  pointer-events:none;
+  z-index:15}
+.frenzy-alert.active {
+  opacity:1;
+  box-shadow:0 0 25px rgba(255,0,91,0.4);
+  animation:pulseFrenzy 0.8s infinite alternate}
+@keyframes pulseFrenzy {
+  from {
+  transform:translateX(-50%) scale(1)}
+to {
+  transform:translateX(-50%) scale(1.05)}
+}
+.core-hint {
+  position:absolute;
+  bottom:14px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(8,8,12,0.75);
+  border:1px solid rgba(255,255,255,0.06);
+  backdrop-filter:blur(6px);
+  padding:5px 14px;
+  border-radius:20px;
+  font-size:10px;
+  color:#8f909b;
+  pointer-events:none;
+  white-space:nowrap}
+/* BOTTOM UPGRADE MATRIX */
+
+.lab-controls {
+  background:#0e0e14;
+  border-top:1px solid var(--border);
+  padding:14px}
+.controls-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+  gap:10px}
+.upgrade-card {
+  background:#13131b;
+  border:1px solid var(--border);
+  padding:12px;
+  border-radius:6px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  gap:8px;
+  transition:0.2s;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent}
+.upgrade-card:hover:not(.disabled) {
+  border-color:var(--acid);
+  transform:translateY(-2px);
+  background:#161622}
+.upgrade-card.disabled {
+  opacity:0.4;
+  cursor:not-allowed;
+  filter:grayscale(0.8)}
+.up-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start}
+.up-title {
+  font-size:12px;
+  font-weight:700;
+  color:#eee}
+.up-count {
+  font-size:11px;
+  font-family:var(--font-title);
+  font-weight:700;
+  color:var(--acid)}
+.up-desc {
+  font-size:10px;
+  color:#7e808c;
+  line-height:1.3}
+.up-footer {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-top:1px solid rgba(255,255,255,0.05);
+  padding-top:7px;
+  margin-top:2px}
+.up-cost {
+  font-size:11px;
+  font-weight:700;
+  color:var(--cyan);
+  font-family:var(--font-title)}
+.evolve-btn {
+  grid-column:1/-1;
+  background:linear-gradient(90deg,rgba(201,255,25,0.1),rgba(0,240,255,0.1));
+  border:1px solid var(--acid);
+  color:var(--acid);
+  padding:12px;
+  border-radius:6px;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.08em;
+  text-align:center;
+  cursor:pointer;
+  transition:0.2s;
+  text-transform:uppercase}
+.evolve-btn:hover:not(.disabled) {
+  background:var(--acid);
+  color:#08080a;
+  box-shadow:0 0 25px rgba(201,255,25,0.3)}
+.evolve-btn.disabled {
+  opacity:0.35;
+  cursor:not-allowed;
+  border-color:var(--border);
+  color:#888}
+/* CONTACTS */
+
+.contacts {
+  background:var(--panel);
+  border:1px solid var(--border);
+  padding:36px 28px;
+  border-radius:8px;
+  margin-bottom:40px;
+  backdrop-filter:blur(10px)}
+.contacts h2 {
+  font-family:var(--font-title);
+  font-size:clamp(28px,4.5vw,46px);
+  line-height:1;
+  margin-bottom:14px}
+.contacts h2 span {
+  color:var(--acid)}
+.contacts p {
+  color:#9e9ea7;
+  max-width:620px;
+  font-size:13px;
+  line-height:1.6}
+.contact-links {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-top:22px}
+.link-btn {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:13px 18px;
+  background:#121217;
+  border:1px solid var(--border);
+  color:#eee;
+  text-decoration:none;
+  font-size:13px;
+  font-weight:600;
+  border-radius:5px;
+  cursor:pointer;
+  transition:0.2s;
+  -webkit-tap-highlight-color:transparent;
+  width:100%}
+.link-btn--accent {
+  border-color: var(--acid);
+  color: var(--acid);
+}
+
+.link-btn svg {
+  width:16px;
+  height:16px;
+  flex-shrink:0;
+  stroke:currentColor;
+  fill:none;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  opacity:0.85;
+  transition:0.2s}
+.link-btn span {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap}
+.link-btn:hover {
+  border-color:var(--acid);
+  color:var(--acid);
+  transform:translateY(-2px)}
+.link-btn:hover svg {
+  opacity:1;
+  stroke:var(--acid)}
+.link-btn:active {
+  transform:translateY(0)}
+.toast {
+  position:fixed;
+  bottom:24px;
+  right:24px;
+  background:var(--acid);
+  color:#08080a;
+  padding:10px 18px;
+  font-size:12px;
+  font-weight:700;
+  border-radius:4px;
+  opacity:0;
+  transform:translateY(20px);
+  transition:0.3s;
+  z-index:100}
+.toast.active {
+  opacity:1;
+  transform:translateY(0)}
+footer {
+  border-top:1px solid var(--border);
+  padding:22px 5vw;
+  text-align:center;
+  font-size:11px;
+  color:#666}
+@media(min-width:768px) {
+  .contact-links {
+  flex-direction:row;
+  flex-wrap:wrap}
+.link-btn {
+  width:auto}
+}
+@media(max-width:600px) {
+  main {
+  width:min(94vw,1120px)}
+.core-viewport {
+  height:310px}
+.lab-hud {
+  grid-template-columns:1fr auto;
+  gap:8px}
+.tier-tag {
+  grid-column:1/-1}
+.cta-row .btn-primary, .cta-row .btn-outline {
+  width:100%;
+  text-align:center}
+}
+
+
+button,
+[role="button"] {
+  font: inherit;
+}
+
+.core-viewport {
+  -webkit-tap-highlight-color: transparent;
+}
+
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div class="overlay"></div>
+
+<header>
+  <div class="brand">NIKITA<span>.</span>BYCHKOV</div>
+  <div class="nav-actions">
+    <button class="btn-mini" id="audioToggle">SOUND: ON</button>
+    <a href="#contacts" class="btn-mini">CONTACTS ↗</a>
+  </div>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="badge">UNITY DEVELOPER · 3D GENERALIST · TECH ARTIST</div>
+    <h1>CODE. ART.<br><b>PRODUCTION.</b></h1>
+    <p class="pitch">
+      Боевой модуль production-линии: от <b>Game-Ready 3D под ключ</b> (модели, скелет, IK, шейдеры) до <b>масштабируемой C# архитектуры</b> и <b>жёсткой мобильной оптимизации</b>. Без багов и дедлайновых срывов.
+    </p>
+
+    <div class="metrics">
+      <div class="m-card">
+        <div class="val">50+</div>
+        <div class="desc"><b>Проектов запущено</b><br>Casual / Hyper-casual с миллионами игроков</div>
+      </div>
+      <div class="m-card">
+        <div class="val">8+ ЛЕТ</div>
+        <div class="desc"><b>Full 3D Pipeline</b><br>Blender, ZBrush, Rig & IK, UV, Substance, LODs</div>
+      </div>
+      <div class="m-card">
+        <div class="val">6+ ЛЕТ</div>
+        <div class="desc"><b>Unity / C# Production</b><br>SOLID, State Machines, Physics, AI, Shaders</div>
+      </div>
+      <div class="m-card">
+        <div class="val">−40%</div>
+        <div class="desc"><b>Draw Calls & Profiling</b><br>Zero Alloc Pooling, URP, сборка билдов на 30% быстрее</div>
+      </div>
+    </div>
+
+    <div class="cta-row">
+      <a href="https://yandex.ru/games/app/evoliutsiia-virusov-sliianie-v-laboratorii-594042?utm_source=app_page#menu" target="_blank" rel="noopener" class="btn-primary">
+        АКТУАЛЬНЫЙ РЕЛИЗ ↗
+      </a>
+      <a href="#playable" class="btn-outline">ДЕМКА ↓</a>
+      <a href="https://t.me/Kwadratik" target="_blank" rel="noopener" class="btn-outline">TELEGRAM ↗</a>
+      <a href="tel:+79652959713" class="btn-outline">+7 (965) 295-97-13</a>
+    </div>
+
+    <div class="pipeline-strip">
+      <div class="pipe-box">
+        <h3>// 01. 3D & GAME-READY</h3>
+        <p><b>Blender, 3ds Max, ZBrush, Substance, Marvelous, 3D-Coat.</b> Персонажи, пропсы, окружение, ретопология, риг костей + IK, анимация и текстурные атласы под ключ.</p>
+      </div>
+      <div class="pipe-box">
+        <h3>// 02. TECH ART & SHADERS</h3>
+        <p><b>Shader Graph, HLSL, URP, Lighting & Bake.</b> Интеграция ассетов в движок, настройка материалов, визуальных эффектов и пост-процессинга под мобильные лимиты.</p>
+      </div>
+      <div class="pipe-box">
+        <h3>// 03. CODING & RELEASE</h3>
+        <p><b>C#, Паттерны, Profiler, Git.</b> Опыт в Essentric Games, Duat Games, Pixapp, 3DBNK. Игры от первой механики до релизного билда.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- INCREMENTAL LAB GAME -->
+  <section class="game-section" id="playable">
+    <div class="lab-container">
+      <div class="lab-hud">
+        <div class="hud-stat-box">
+          <div class="lbl">СИНТЕЗИРОВАНО ДНК</div>
+          <div class="val" id="dnaVal">0 <span>EVO</span></div>
+          <div class="hud-rate" id="rateVal">+0 EVO/сек</div>
+        </div>
+        <div class="tier-tag" id="tierTag">ФАЗА 1: ШТАММ ALFA</div>
+        <div class="hud-stat-box hud-stat-box--right">
+          <div class="lbl">ОВЕРДРАЙВ СИНТЕЗА</div>
+          <div class="val hud-value--cyan" id="overdriveVal">0%</div>
+          <div class="hud-rate" id="multiplierVal">x1 СКОРОСТЬ</div>
+        </div>
+      </div>
+
+      <div class="overdrive-wrapper">
+        <div class="overdrive-fill" id="overdriveBar"></div>
+      </div>
+
+      <div class="core-viewport" id="coreViewport">
+        <div class="frenzy-alert" id="frenzyAlert">🔥 НЕЙРОННЫЙ ОВЕРДРАЙВ x5 // СПАМЬ ТАПАМИ!</div>
+        <canvas id="game-canvas"></canvas>
+        <div class="core-hint">ТАПАЙ ПО ВИРУСНОМУ ЯДРУ ДЛЯ СБОРА ДНК</div>
+      </div>
+
+      <div class="lab-controls">
+        <div class="controls-grid">
+          <div class="upgrade-card" id="upClick">
+            <div class="up-header">
+              <span class="up-title">ЛАЗЕРНЫЙ СИНТЕЗ</span>
+              <span class="up-count" id="lvlClick">Lvl 1</span>
+            </div>
+            <div class="up-desc">+1 к силе каждого тапа по ядру</div>
+            <div class="up-footer">
+              <span style="font-size:10px;color:#777">СТОИМОСТЬ</span>
+              <span class="up-cost" id="costClick">15 EVO</span>
+            </div>
+          </div>
+
+          <div class="upgrade-card" id="upDrone">
+            <div class="up-header">
+              <span class="up-title">НАНО-БОТЫ</span>
+              <span class="up-count" id="countDrone">0</span>
+            </div>
+            <div class="up-desc">Авто-сбор +1 EVO в секунду</div>
+            <div class="up-footer">
+              <span style="font-size:10px;color:#777">СТОИМОСТЬ</span>
+              <span class="up-cost" id="costDrone">50 EVO</span>
+            </div>
+          </div>
+
+          <div class="upgrade-card" id="upBio">
+            <div class="up-header">
+              <span class="up-title">БИО-ИНЖЕКТОР</span>
+              <span class="up-count" id="countBio">0</span>
+            </div>
+            <div class="up-desc">Авто-синтез +8 EVO в секунду</div>
+            <div class="up-footer">
+              <span style="font-size:10px;color:#777">СТОИМОСТЬ</span>
+              <span class="up-cost" id="costBio">280 EVO</span>
+            </div>
+          </div>
+
+          <div class="upgrade-card" id="upQuantum">
+            <div class="up-header">
+              <span class="up-title">КВАНТОВЫЙ СПЛАЙСЕР</span>
+              <span class="up-count" id="countQuantum">0</span>
+            </div>
+            <div class="up-desc">Ускоритель +45 EVO в секунду</div>
+            <div class="up-footer">
+              <span style="font-size:10px;color:#777">СТОИМОСТЬ</span>
+              <span class="up-cost" id="costQuantum">1.4K EVO</span>
+            </div>
+          </div>
+
+          <button class="evolve-btn disabled" id="evolveBtn">
+            МУТАЦИЯ ЯДРА (ТРЕБУЕТСЯ: 500 EVO)
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACTS -->
+  <section class="contacts" id="contacts">
+    <h2>LET'S SHIP<br><span>HIT GAMES.</span></h2>
+    <p>
+      Готов закрыть ключевые звенья пайплайна как <b>Middle Unity Developer</b>, <b>Technical Artist</b> или <b>3D Generalist</b>. Удалённо или гибрид.
+    </p>
+    
+    <div class="contact-links">
+      <a href="https://t.me/Kwadratik" target="_blank" rel="noopener" class="link-btn link-btn--accent">
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        <span>TELEGRAM: @Kwadratik</span>
+      </a>
+      <a href="tel:+79652959713" class="link-btn">
+        <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+        <span>+7 (965) 295-97-13</span>
+      </a>
+      <button class="link-btn" data-copy-email>
+        <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        <span>nikita.bychkov.93@bk.ru</span>
+      </button>
+      <a href="https://www.artstation.com/kismich" target="_blank" rel="noopener" class="link-btn">
+        <svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+        <span>ARTSTATION</span>
+      </a>
+      <a href="https://yandex.ru/games/app/evoliutsiia-virusov-sliianie-v-laboratorii-594042?utm_source=app_page#menu" target="_blank" rel="noopener" class="link-btn">
+        <svg viewBox="0 0 24 24"><line x1="6" y1="12" x2="10" y2="12"></line><line x1="8" y1="10" x2="8" y2="14"></line><line x1="15" y1="13" x2="15.01" y2="13"></line><line x1="18" y1="11" x2="18.01" y2="11"></line><rect x="2" y="6" width="20" height="12" rx="2"></rect></svg>
+        <span>YANDEX GAMES</span>
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer>© 2026 Никита Бычков — Unity Developer · Tech Artist · 3D Generalist</footer>
+<div class="toast" id="toast">СКОПИРОВАНО!</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------------------------------------------------------------------------
+  // DOM
+  // ---------------------------------------------------------------------------
+
+  const elements = {
+    audioToggle: document.getElementById('audioToggle'),
+    bgCanvas: document.getElementById('bg-canvas'),
+    coreViewport: document.getElementById('coreViewport'),
+    gameCanvas: document.getElementById('game-canvas'),
+    dnaValue: document.getElementById('dnaVal'),
+    rateValue: document.getElementById('rateVal'),
+    tierTag: document.getElementById('tierTag'),
+    overdriveValue: document.getElementById('overdriveVal'),
+    multiplierValue: document.getElementById('multiplierVal'),
+    overdriveBar: document.getElementById('overdriveBar'),
+    frenzyAlert: document.getElementById('frenzyAlert'),
+    evolveButton: document.getElementById('evolveBtn'),
+    toast: document.getElementById('toast'),
+    clickLevel: document.getElementById('lvlClick'),
+    clickCost: document.getElementById('costClick'),
+    droneCount: document.getElementById('countDrone'),
+    droneCost: document.getElementById('costDrone'),
+    bioCount: document.getElementById('countBio'),
+    bioCost: document.getElementById('costBio'),
+    quantumCount: document.getElementById('countQuantum'),
+    quantumCost: document.getElementById('costQuantum'),
+    upgrades: {
+      click: document.getElementById('upClick'),
+      drone: document.getElementById('upDrone'),
+      bio: document.getElementById('upBio'),
+      quantum: document.getElementById('upQuantum')
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Constants
+  // ---------------------------------------------------------------------------
+
+  const STORAGE_KEY = 'nikita_portfolio_lab_v2';
+  const MAX_OFFLINE_SECONDS = 8 * 60 * 60;
+  const FRAME_DELTA_LIMIT = 0.25;
+
+  const DEFAULT_STATE = Object.freeze({
+    dna: 0,
+    clickLevel: 1,
+    drone: 0,
+    bio: 0,
+    quantum: 0,
+    evolution: 1,
+    overdrive: 0,
+    frenzyUntil: 0,
+    lastTick: Date.now()
+  });
+
+  const PHASE_NAMES = [
+    'ШТАММ ALFA',
+    'ШТАММ BETA',
+    'ШТАММ GAMMA',
+    'ШТАММ DELTA',
+    'ШТАММ OMEGA',
+    'ШТАММ SIGMA',
+    'ШТАММ NOVA',
+    'ШТАММ APEX',
+    'ШТАММ PRIME'
+  ];
+
+  const UPGRADE_ELEMENTS = {
+    click: { count: elements.clickLevel, cost: elements.clickCost },
+    drone: { count: elements.droneCount, cost: elements.droneCost },
+    bio: { count: elements.bioCount, cost: elements.bioCost },
+    quantum: { count: elements.quantumCount, cost: elements.quantumCost }
+  };
+
+  // ---------------------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------------------
+
+  const state = loadState();
+
+  applyOfflineProgress();
+
+  function loadState() {
+    const state = { ...DEFAULT_STATE };
+
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+
+      if (!saved || typeof saved !== 'object') {
+        return state;
+      }
+
+      for (const key of Object.keys(DEFAULT_STATE)) {
+        if (Number.isFinite(Number(saved[key]))) {
+          state[key] = Number(saved[key]);
+        }
+      }
+    } catch (error) {
+      console.warn('Unable to load saved game state:', error);
+    }
+
+    state.dna = Math.max(0, state.dna);
+    state.clickLevel = Math.max(1, Math.floor(state.clickLevel));
+    state.drone = Math.max(0, Math.floor(state.drone));
+    state.bio = Math.max(0, Math.floor(state.bio));
+    state.quantum = Math.max(0, Math.floor(state.quantum));
+    state.evolution = Math.max(1, Math.floor(state.evolution));
+
+    return state;
+  }
+
+  function saveState() {
+    state.lastTick = Date.now();
+
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (error) {
+      console.warn('Unable to save game state:', error);
+    }
+  }
+
+  function applyOfflineProgress() {
+    const elapsed = clamp(
+      (Date.now() - state.lastTick) / 1000,
+      0,
+      MAX_OFFLINE_SECONDS
+    );
+
+    const rate = getProductionRate();
+
+    if (elapsed > 1 && rate > 0) {
+      state.dna += rate * elapsed;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Utility
+  // ---------------------------------------------------------------------------
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function formatNumber(value) {
+    if (!Number.isFinite(value)) {
+      return '0';
+    }
+
+    if (value < 1000) {
+      return Math.floor(value).toLocaleString('ru-RU');
+    }
+
+    if (value < 1e6) {
+      return `${trimDecimal(value / 1000)}K`;
+    }
+
+    if (value < 1e9) {
+      return `${trimDecimal(value / 1e6)}M`;
+    }
+
+    return `${trimDecimal(value / 1e9)}B`;
+  }
+
+  function trimDecimal(value) {
+    return value.toFixed(1).replace('.0', '');
+  }
+
+  function getProductionRate() {
+    return state.drone + state.bio * 8 + state.quantum * 45;
+  }
+
+  function getClickPower() {
+    return state.clickLevel;
+  }
+
+  function isFrenzyActive() {
+    return Date.now() < state.frenzyUntil;
+  }
+
+
+  function getEvolutionCost() {
+    return 500 * Math.pow(3, state.evolution - 1);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Audio
+  // ---------------------------------------------------------------------------
+
+  let audioEnabled = true;
+  let audioContext = null;
+
+  function getAudioContext() {
+    if (!audioEnabled) {
+      return null;
+    }
+
+    try {
+      audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+
+      return audioContext;
+    } catch (error) {
+      console.warn('Audio is unavailable:', error);
+      return null;
+    }
+  }
+
+  function playSound(frequency = 600, type = 'sine', duration = 0.07, volume = 0.025) {
+    const context = getAudioContext();
+
+    if (!context) {
+      return;
+    }
+
+    try {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      const startTime = context.currentTime;
+      const endTime = startTime + duration;
+
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(frequency, startTime);
+      oscillator.frequency.exponentialRampToValueAtTime(
+        Math.max(40, frequency * 0.72),
+        endTime
+      );
+
+      gain.gain.setValueAtTime(volume, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, endTime);
+
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(startTime);
+      oscillator.stop(endTime);
+    } catch (error) {
+      console.warn('Unable to play sound:', error);
+    }
+  }
+
+  elements.audioToggle?.addEventListener('click', () => {
+    audioEnabled = !audioEnabled;
+    elements.audioToggle.textContent = `SOUND: ${audioEnabled ? 'ON' : 'OFF'}`;
+
+    if (audioEnabled) {
+      playSound(760, 'triangle', 0.09, 0.03);
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // UI feedback
+  // ---------------------------------------------------------------------------
+
+  let toastTimer = 0;
+
+  function showToast(message) {
+    if (!elements.toast) {
+      return;
+    }
+
+    elements.toast.textContent = message;
+    elements.toast.classList.add('active');
+
+    clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => {
+      elements.toast.classList.remove('active');
+    }, 1400);
+  }
+
+  async function copyText(text, message = 'СКОПИРОВАНО!') {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        textarea.remove();
+      }
+
+      showToast(message);
+      playSound(880, 'triangle', 0.08, 0.025);
+    } catch (error) {
+      console.warn('Unable to copy text:', error);
+      showToast('СКОПИРОВАТЬ НЕ УДАЛОСЬ');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Upgrades
+  // ---------------------------------------------------------------------------
+
+  const upgrades = {
+    click: {
+      getLevel: () => state.clickLevel,
+      getCost: () => Math.floor(15 * Math.pow(1.72, state.clickLevel - 1)),
+      purchase: () => { state.clickLevel += 1; }
+    },
+    drone: {
+      getLevel: () => state.drone,
+      getCost: () => Math.floor(50 * Math.pow(1.62, state.drone)),
+      purchase: () => { state.drone += 1; }
+    },
+    bio: {
+      getLevel: () => state.bio,
+      getCost: () => Math.floor(280 * Math.pow(1.58, state.bio)),
+      purchase: () => { state.bio += 1; }
+    },
+    quantum: {
+      getLevel: () => state.quantum,
+      getCost: () => Math.floor(1400 * Math.pow(1.52, state.quantum)),
+      purchase: () => { state.quantum += 1; }
+    }
+  };
+
+  function buyUpgrade(type) {
+    const upgrade = upgrades[type];
+
+    if (!upgrade) {
+      return;
+    }
+
+    const cost = upgrade.getCost();
+
+    if (state.dna + 1e-9 < cost) {
+      playSound(130, 'square', 0.07, 0.02);
+      showToast(`НУЖНО ЕЩЁ ${formatNumber(cost - state.dna)} EVO`);
+      return;
+    }
+
+    state.dna -= cost;
+    upgrade.purchase();
+    state.overdrive = clamp(state.overdrive + 8, 0, 100);
+
+    playSound(420 + Math.random() * 160, 'triangle', 0.09, 0.025);
+    showToast('УЛУЧШЕНИЕ УСТАНОВЛЕНО');
+
+    renderUI(true);
+    saveState();
+  }
+
+  function triggerEvolution() {
+    const cost = getEvolutionCost();
+
+    if (state.dna < cost) {
+      showToast(`ТРЕБУЕТСЯ ${formatNumber(cost)} EVO`);
+      playSound(130, 'square', 0.08, 0.02);
+      return;
+    }
+
+    state.dna -= cost;
+    state.evolution += 1;
+    state.overdrive = 100;
+    state.frenzyUntil = Date.now() + 8000;
+
+    pulseCore(true);
+    playSound(150, 'sawtooth', 0.2, 0.035);
+    window.setTimeout(() => playSound(320, 'triangle', 0.18, 0.03), 90);
+    showToast('МУТАЦИЯ ЗАВЕРШЕНА');
+
+    renderUI(true);
+    saveState();
+  }
+
+  // ---------------------------------------------------------------------------
+  // UI rendering
+  // ---------------------------------------------------------------------------
+
+  let lastRendered = {
+    dna: NaN,
+    rate: NaN,
+    overdrive: NaN,
+    frenzy: null,
+    evolution: NaN,
+    clickLevel: NaN,
+    drone: NaN,
+    bio: NaN,
+    quantum: NaN,
+    evolutionCost: NaN
+  };
+
+  function renderUI(force = false) {
+    const rate = getProductionRate();
+    const frenzy = isFrenzyActive();
+    const multiplier = frenzy ? 5 : 1;
+    const evolutionCost = getEvolutionCost();
+
+    if (force || Math.floor(state.dna) !== Math.floor(lastRendered.dna)) {
+      elements.dnaValue.innerHTML = `${formatNumber(state.dna)} <span>EVO</span>`;
+      lastRendered.dna = state.dna;
+    }
+
+    if (force || rate !== lastRendered.rate) {
+      elements.rateValue.textContent = `+${formatNumber(rate)} EVO/сек`;
+      lastRendered.rate = rate;
+    }
+
+    if (force || Math.floor(state.overdrive) !== Math.floor(lastRendered.overdrive)) {
+      const overdrive = Math.floor(state.overdrive);
+      elements.overdriveValue.textContent = `${overdrive}%`;
+      elements.overdriveBar.style.width = `${clamp(state.overdrive, 0, 100)}%`;
+      lastRendered.overdrive = state.overdrive;
+    }
+
+    if (force || frenzy !== lastRendered.frenzy) {
+      elements.multiplierValue.textContent = `x${multiplier} СКОРОСТЬ`;
+      elements.frenzyAlert.classList.toggle('active', frenzy);
+      elements.overdriveBar.classList.toggle('frenzy', frenzy);
+      lastRendered.frenzy = frenzy;
+    }
+
+    if (force || state.evolution !== lastRendered.evolution) {
+      const phase = 1 + Math.min(8, state.evolution - 1);
+      elements.tierTag.textContent = `ФАЗА ${phase}: ${PHASE_NAMES[phase - 1]}`;
+      lastRendered.evolution = state.evolution;
+    }
+
+    renderUpgrade('click');
+    renderUpgrade('drone');
+    renderUpgrade('bio');
+    renderUpgrade('quantum');
+
+    if (force || evolutionCost !== lastRendered.evolutionCost) {
+      elements.evolveButton.classList.toggle('disabled', state.dna < evolutionCost);
+      elements.evolveButton.textContent =
+        `МУТАЦИЯ ЯДРА (ТРЕБУЕТСЯ: ${formatNumber(evolutionCost)} EVO)`;
+      lastRendered.evolutionCost = evolutionCost;
+    } else {
+      elements.evolveButton.classList.toggle('disabled', state.dna < evolutionCost);
+    }
+  }
+
+  function renderUpgrade(type) {
+    const upgrade = upgrades[type];
+    const target = UPGRADE_ELEMENTS[type];
+    const level = upgrade.getLevel();
+    const cost = upgrade.getCost();
+    const previousLevel = lastRendered[type];
+
+    if (level !== previousLevel) {
+      target.count.textContent = type === 'click' ? `Lvl ${level}` : String(level);
+      target.cost.textContent = `${formatNumber(cost)} EVO`;
+      lastRendered[type] = level;
+    }
+
+    elements.upgrades[type].classList.toggle('disabled', state.dna + 1e-9 < cost);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Game loop
+  // ---------------------------------------------------------------------------
+
+  let previousTime = performance.now();
+  let saveAccumulator = 0;
+  let uiAccumulator = 0;
+  const UI_UPDATE_INTERVAL = 1 / 15;
+
+  function updateGame(time) {
+    const deltaTime = clamp((time - previousTime) / 1000, 0, FRAME_DELTA_LIMIT);
+    previousTime = time;
+
+    const frenzy = isFrenzyActive();
+    const multiplier = frenzy ? 5 : 1;
+    const rate = getProductionRate();
+
+    if (rate > 0) {
+      state.dna += rate * deltaTime * multiplier;
+    }
+
+    state.overdrive += (rate > 0 ? 2.5 : 1.1) * deltaTime;
+
+    if (frenzy) {
+      state.overdrive -= 12 * deltaTime;
+    }
+
+    state.overdrive = clamp(state.overdrive, 0, 100);
+
+    if (!frenzy && state.overdrive >= 100) {
+      state.frenzyUntil = Date.now() + 5500;
+      state.overdrive = 0;
+      playSound(980, 'sawtooth', 0.12, 0.025);
+      showToast('⚡ НЕЙРОННЫЙ ОВЕРДРАЙВ x5');
+    }
+
+    saveAccumulator += deltaTime;
+    if (saveAccumulator >= 2) {
+      saveAccumulator = 0;
+      saveState();
+    }
+
+    uiAccumulator += deltaTime;
+    if (uiAccumulator >= UI_UPDATE_INTERVAL) {
+      uiAccumulator = 0;
+      renderUI();
+    }
+
+    animateCore(deltaTime);
+    requestAnimationFrame(updateGame);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Core interaction
+  // ---------------------------------------------------------------------------
+
+  let corePulse = 0;
+
+  function pulseCore(large = false) {
+    corePulse = Math.max(corePulse, large ? 1.25 : 0.5);
+  }
+
+  function collectAt(clientX, clientY) {
+    const rect = elements.coreViewport.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+    const frenzy = isFrenzyActive();
+    const multiplier = frenzy ? 5 : 1;
+    const critical = Math.random() < 0.08;
+    const amount = getClickPower() * multiplier * (critical ? 3 : 1);
+
+    state.dna += amount;
+    state.overdrive = clamp(state.overdrive + (critical ? 10 : 4), 0, 100);
+
+    pulseCore(critical);
+    spawnFloatingNumber(`+${formatNumber(amount)}`, x, y, critical);
+
+    playSound(
+      critical ? 980 : 620 + Math.random() * 80,
+      critical ? 'triangle' : 'sine',
+      critical ? 0.11 : 0.055,
+      critical ? 0.035 : 0.018
+    );
+
+    renderUI();
+  }
+
+  function spawnFloatingNumber(text, x, y, critical = false) {
+    const number = document.createElement('div');
+    number.className = `floating-num${critical ? ' crit' : ''}`;
+    number.textContent = text;
+    number.style.left = `${x}px`;
+    number.style.top = `${y}px`;
+
+    elements.coreViewport.appendChild(number);
+    number.addEventListener('animationend', () => number.remove(), { once: true });
+  }
+
+  elements.coreViewport?.addEventListener('pointerdown', event => {
+    if (event.button !== undefined && event.button !== 0) {
+      return;
+    }
+
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch (_) {
+      // Pointer capture is optional; interaction still works without it.
+    }
+
+    getAudioContext();
+    collectAt(event.clientX, event.clientY);
+  });
+
+  elements.coreViewport?.addEventListener('keydown', event => {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+
+    event.preventDefault();
+
+    const rect = elements.coreViewport.getBoundingClientRect();
+    collectAt(rect.left + rect.width / 2, rect.top + rect.height / 2);
+  });
+
+  elements.coreViewport?.addEventListener(
+    'touchmove',
+    event => event.preventDefault(),
+    { passive: false }
+  );
+
+  elements.coreViewport?.setAttribute('tabindex', '0');
+  elements.coreViewport?.setAttribute('role', 'button');
+  elements.coreViewport?.setAttribute('aria-label', 'Собрать EVO');
+
+  // ---------------------------------------------------------------------------
+  // Upgrade / contact events
+  // ---------------------------------------------------------------------------
+
+  for (const type of Object.keys(upgrades)) {
+    elements.upgrades[type]?.addEventListener('click', () => buyUpgrade(type));
+  }
+
+  elements.evolveButton?.addEventListener('click', triggerEvolution);
+
+  document.querySelector('[data-copy-email]')?.addEventListener('click', () => {
+    copyText('nikita.bychkov.93@bk.ru', 'EMAIL СКОПИРОВАН!');
+  });
+
+  window.addEventListener('beforeunload', saveState);
+
+  // ---------------------------------------------------------------------------
+  // Three.js scene
+  // ---------------------------------------------------------------------------
+
+  let renderer = null;
+  let scene = null;
+  let camera = null;
+  let core = null;
+  let coreGlow = null;
+  let ring = null;
+  let particles = null;
+  let threeReady = false;
+  let coreScale = null;
+
+  function initializeThree() {
+    if (!elements.gameCanvas || !window.THREE) {
+      return;
+    }
+
+    try {
+      coreScale = new THREE.Vector3();
+
+      renderer = new THREE.WebGLRenderer({
+        canvas: elements.gameCanvas,
+        antialias: true,
+        alpha: true,
+        powerPreference: 'high-performance'
+      });
+
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+      renderer.setSize(
+        elements.gameCanvas.clientWidth || 800,
+        elements.gameCanvas.clientHeight || 370,
+        false
+      );
+      renderer.outputEncoding = THREE.sRGBEncoding;
+
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+      camera.position.set(0, 0, 5.5);
+
+      createLights();
+      createCore();
+      createParticles();
+
+      threeReady = true;
+      resizeThree();
+      requestAnimationFrame(renderThree);
+    } catch (error) {
+      console.warn('Three.js initialization failed:', error);
+    }
+  }
+
+  function createLights() {
+    scene.add(new THREE.AmbientLight(0x668844, 1.5));
+
+    const keyLight = new THREE.PointLight(0xbfff33, 3.2, 12);
+    keyLight.position.set(2, 2, 4);
+    scene.add(keyLight);
+
+    const cyanLight = new THREE.PointLight(0x00ddff, 2.5, 10);
+    cyanLight.position.set(-3, -1, 2);
+    scene.add(cyanLight);
+  }
+
+  function createCore() {
+    core = new THREE.Group();
+    scene.add(core);
+
+    const sphere = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(1.08, 2),
+      new THREE.MeshStandardMaterial({
+        color: 0x9fcf16,
+        emissive: 0x355500,
+        emissiveIntensity: 1.8,
+        roughness: 0.28,
+        metalness: 0.18
+      })
+    );
+    core.add(sphere);
+
+    const wireframe = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(1.17, 2),
+      new THREE.MeshBasicMaterial({
+        color: 0xc9ff19,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.38
+      })
+    );
+    core.add(wireframe);
+
+    coreGlow = new THREE.Mesh(
+      new THREE.SphereGeometry(1.28, 32, 32),
+      new THREE.MeshBasicMaterial({
+        color: 0xc9ff19,
+        transparent: true,
+        opacity: 0.075,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      })
+    );
+    core.add(coreGlow);
+
+    ring = new THREE.Mesh(
+      new THREE.TorusGeometry(1.48, 0.018, 8, 96),
+      new THREE.MeshBasicMaterial({
+        color: 0x00eaff,
+        transparent: true,
+        opacity: 0.72
+      })
+    );
+    ring.rotation.x = Math.PI / 2.6;
+    core.add(ring);
+  }
+
+  function createParticles() {
+    const count = 260;
+    const positions = new Float32Array(count * 3);
+
+    for (let index = 0; index < count; index += 1) {
+      const radius = 1.7 + Math.random() * 2;
+      const angle = Math.random() * Math.PI * 2;
+      const z = (Math.random() * 2 - 1) * 1.7;
+      const offset = index * 3;
+
+      positions[offset] = Math.cos(angle) * radius;
+      positions[offset + 1] = Math.sin(angle) * radius;
+      positions[offset + 2] = z;
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+    particles = new THREE.Points(
+      geometry,
+      new THREE.PointsMaterial({
+        color: 0xc9ff19,
+        size: 0.025,
+        transparent: true,
+        opacity: 0.55,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      })
+    );
+
+    scene.add(particles);
+  }
+
+  function resizeThree() {
+    if (!renderer || !camera || !elements.gameCanvas) {
+      return;
+    }
+
+    const rect = elements.gameCanvas.getBoundingClientRect();
+    const width = Math.max(1, Math.floor(rect.width));
+    const height = Math.max(1, Math.floor(rect.height));
+
+    renderer.setSize(width, height, false);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+  }
+
+  function renderThree() {
+    if (threeReady) {
+      renderer.render(scene, camera);
+    }
+
+    requestAnimationFrame(renderThree);
+  }
+
+  function animateCore(deltaTime) {
+    if (!threeReady) {
+      return;
+    }
+
+    const frenzy = isFrenzyActive();
+    const speed = frenzy ? 1.9 : 0.7;
+
+    core.rotation.y += deltaTime * speed;
+    core.rotation.x += deltaTime * speed * 0.27;
+    ring.rotation.z += deltaTime * speed * 1.6;
+    particles.rotation.y -= deltaTime * 0.06;
+
+    corePulse = Math.max(0, corePulse - deltaTime * 1.8);
+
+    const scale = 1 + corePulse * 0.14;
+    coreScale.set(scale, scale, scale);
+    core.scale.lerp(coreScale, 0.12);
+
+    coreGlow.material.opacity = 0.06 + corePulse * 0.06 + (frenzy ? 0.06 : 0);
+    ring.material.opacity = frenzy ? 1 : 0.65;
+  }
+
+  window.addEventListener('resize', resizeThree, { passive: true });
+
+  // ---------------------------------------------------------------------------
+  // Background particles
+  // ---------------------------------------------------------------------------
+
+  const backgroundContext = elements.bgCanvas?.getContext('2d');
+  const backgroundParticles = Array.from({ length: 80 }, () => ({
+    x: Math.random(),
+    y: Math.random(),
+    radius: Math.random() * 1.5 + 0.2,
+    speed: Math.random() * 0.00012 + 0.00003
+  }));
+
+  function renderBackground() {
+    if (!elements.bgCanvas || !backgroundContext) {
+      return;
+    }
+
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const canvasWidth = Math.floor(width * pixelRatio);
+    const canvasHeight = Math.floor(height * pixelRatio);
+
+    if (
+      elements.bgCanvas.width !== canvasWidth ||
+      elements.bgCanvas.height !== canvasHeight
+    ) {
+      elements.bgCanvas.width = canvasWidth;
+      elements.bgCanvas.height = canvasHeight;
+      elements.bgCanvas.style.width = `${width}px`;
+      elements.bgCanvas.style.height = `${height}px`;
+    }
+
+    backgroundContext.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    backgroundContext.clearRect(0, 0, width, height);
+
+    backgroundContext.globalAlpha = 0.25;
+    backgroundContext.fillStyle = '#c9ff19';
+
+    for (const particle of backgroundParticles) {
+      particle.y -= particle.speed * 16;
+
+      if (particle.y < -0.02) {
+        particle.y = 1.02;
+      }
+
+      backgroundContext.beginPath();
+      backgroundContext.arc(
+        particle.x * width,
+        particle.y * height,
+        particle.radius,
+        0,
+        Math.PI * 2
+      );
+      backgroundContext.fill();
+    }
+
+    requestAnimationFrame(renderBackground);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Start
+  // ---------------------------------------------------------------------------
+
+  initializeThree();
+  renderUI(true);
+  renderBackground();
+  requestAnimationFrame(updateGame);
+})();
+</script>
+</body>
+</html>
