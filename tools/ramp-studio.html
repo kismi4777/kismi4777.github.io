@@ -80,6 +80,7 @@
   <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
   <header class="border-b border-retro-700 bg-retro-850/90 backdrop-blur px-4 py-3 sticky top-0 z-30 flex items-center justify-between">
     <div class="flex items-center gap-3">
+      <a href="../index.html" class="text-[10px] sm:text-xs text-slate-400 hover:text-retro-accent transition font-mono">← Portfolio</a>
       <div class="w-8 h-8 rounded bg-gradient-to-tr from-retro-accentHover to-retro-accent flex items-center justify-center shadow-lg shadow-retro-accent/20 flex-shrink-0">
         <svg class="w-5 h-5 text-retro-900 font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
@@ -88,7 +89,6 @@
       <div>
         <h1 class="font-bold text-base sm:text-lg leading-tight tracking-wide text-white flex items-center gap-2">
           RampStudio
-          <!-- Ссылка на TG @Kwadratik вместо старой плашки -->
           <a href="https://t.me/Kwadratik" target="_blank" rel="noopener noreferrer" class="text-[10px] sm:text-xs px-2.5 py-0.5 rounded bg-retro-700 hover:bg-retro-600 text-retro-accent hover:text-white border border-retro-600 font-mono inline-flex items-center gap-1.5 transition shadow-sm active:scale-95" title="Telegram @Kwadratik">
             <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
@@ -176,7 +176,7 @@
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2">
             <h2 class="text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-300">Каталог пресетов</h2>
-            <span id="presetCountBadge" class="text-xs px-2 py-0.5 rounded-full bg-retro-700 text-retro-accent font-mono font-semibold">500+</span>
+            <span id="presetCountBadge" class="text-xs px-2 py-0.5 rounded-full bg-retro-700 text-retro-accent font-mono font-semibold">—</span>
           </div>
           <button id="btnOpenSaveCustom" class="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 text-xs font-medium transition flex items-center gap-1 shadow-sm">
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -375,9 +375,7 @@
   <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
   <script>
-    /* ==========================================================================
-       1. МАТЕМАТИКА ЦВЕТА
-       ========================================================================== */
+
     function hslToHex(h, s, l) {
       h = ((h % 360) + 360) % 360;
       s = Math.max(0, Math.min(100, s)) / 100;
@@ -413,9 +411,7 @@
       return Math.max(0, Math.min(255, Math.round(s * 255)));
     }
 
-    /* ==========================================================================
-       2. БАЗА 500+ ПРЕСЕТОВ
-       ========================================================================== */
+    /* Curated preset library */
     const BASE_PRESETS = [
       { id: 'gb-dmg', name: 'Game Boy Classic (DMG)', cat: 'retro', stops: [{ pos: 0.0, color: '#0f380f' }, { pos: 0.33, color: '#306230' }, { pos: 0.66, color: '#8bac0f' }, { pos: 1.0, color: '#9bbc0f' }] },
       { id: 'gb-pocket', name: 'Game Boy Pocket (B&W)', cat: 'retro', stops: [{ pos: 0.0, color: '#181818' }, { pos: 0.33, color: '#555555' }, { pos: 0.66, color: '#aaaaaa' }, { pos: 1.0, color: '#ffffff' }] },
@@ -446,154 +442,7 @@
 
     const ALL_PRESETS = [...BASE_PRESETS];
 
-    (function generateRichPresetCatalog() {
-      const gbMods = ["Gold", "Silver", "Clear Atomic", "Berry Red", "Kiwi", "Grape", "Dandelion", "Bivert Mod", "Sepia 1989", "Chocobo", "Triforce", "Samus", "Pikachu", "Charizard", "Blastoise", "Wario", "Kirby Dream", "Castlevania", "Metroid", "Plasma GB"];
-      gbMods.forEach((mod, idx) => {
-        const h = (idx * 18 + 45) % 360;
-        ALL_PRESETS.push({
-          id: `gen-gb-${idx}`,
-          name: `Game Boy Mod: ${mod}`,
-          cat: 'retro',
-          stops: [
-            { pos: 0.0, color: hslToHex(h, 60, 8) },
-            { pos: 0.33, color: hslToHex(h, 50, 24) },
-            { pos: 0.66, color: hslToHex(h, 65, 48) },
-            { pos: 1.0, color: hslToHex(h, 80, 75) }
-          ]
-        });
-      });
-
-      const compList = ["DEC VT220", "IBM 5150", "Tandy 1000", "Atari ST", "Amstrad CPC", "Mac 128K", "Sharp X68000", "PC-9801", "Acorn Arch", "FM Towns"];
-      compList.forEach((cmp, idx) => {
-        const h = (idx * 36 + 15) % 360;
-        ALL_PRESETS.push({
-          id: `gen-cmp-${idx}`,
-          name: `CRT Mon: ${cmp}`,
-          cat: 'computers',
-          stops: [
-            { pos: 0.0, color: hslToHex(h, 30, 6) },
-            { pos: 0.25, color: hslToHex(h, 45, 22) },
-            { pos: 0.55, color: hslToHex(h, 60, 48) },
-            { pos: 0.85, color: hslToHex(h, 75, 74) },
-            { pos: 1.0, color: '#ffffff' }
-          ]
-        });
-      });
-
-      for (let i = 1; i <= 70; i++) {
-        const h1 = (i * 29) % 360;
-        const h2 = (h1 + 50) % 360;
-        ALL_PRESETS.push({
-          id: `gen-px-${i}`,
-          name: `Pixel Harmony Tone #${i}`,
-          cat: 'pixel',
-          stops: [
-            { pos: 0.0, color: hslToHex(h1, 45, 9) },
-            { pos: 0.25, color: hslToHex(h1, 55, 25) },
-            { pos: 0.55, color: hslToHex(h2, 60, 50) },
-            { pos: 0.8, color: hslToHex(h2, 75, 75) },
-            { pos: 1.0, color: hslToHex(h2, 90, 93) }
-          ]
-        });
-      }
-
-      for (let i = 1; i <= 50; i++) {
-        const baseH = (i * 31) % 360;
-        ALL_PRESETS.push({
-          id: `gen-sci-${i}`,
-          name: `Thermal Spectral #${i}`,
-          cat: 'scivis',
-          stops: [
-            { pos: 0.0, color: hslToHex(baseH, 90, 8) },
-            { pos: 0.3, color: hslToHex((baseH + 50) % 360, 85, 35) },
-            { pos: 0.65, color: hslToHex((baseH + 110) % 360, 90, 55) },
-            { pos: 0.88, color: hslToHex((baseH + 160) % 360, 95, 76) },
-            { pos: 1.0, color: '#ffffff' }
-          ]
-        });
-      }
-
-      for (let i = 1; i <= 60; i++) {
-        const h1 = (i * 41) % 360;
-        const h2 = (h1 + 130) % 360;
-        ALL_PRESETS.push({
-          id: `gen-cyb-${i}`,
-          name: `Cyber Neon Glow #${i}`,
-          cat: 'cyber',
-          stops: [
-            { pos: 0.0, color: hslToHex(h1, 85, 6) },
-            { pos: 0.3, color: hslToHex(h1, 90, 26) },
-            { pos: 0.65, color: hslToHex(h2, 95, 52) },
-            { pos: 0.88, color: hslToHex(h2, 100, 75) },
-            { pos: 1.0, color: '#ffffff' }
-          ]
-        });
-      }
-
-      for (let i = 1; i <= 60; i++) {
-        const h = (i * 23 + 20) % 360;
-        ALL_PRESETS.push({
-          id: `gen-nat-${i}`,
-          name: `Natural Biome #${i}`,
-          cat: 'nature',
-          stops: [
-            { pos: 0.0, color: hslToHex(h, 45, 7) },
-            { pos: 0.28, color: hslToHex(h, 50, 24) },
-            { pos: 0.6, color: hslToHex((h + 30) % 360, 55, 46) },
-            { pos: 0.85, color: hslToHex((h + 50) % 360, 65, 68) },
-            { pos: 1.0, color: hslToHex((h + 60) % 360, 75, 88) }
-          ]
-        });
-      }
-
-      for (let i = 1; i <= 60; i++) {
-        const h = (i * 27 + 310) % 360;
-        ALL_PRESETS.push({
-          id: `gen-sky-${i}`,
-          name: `Sky Dusk Horizon #${i}`,
-          cat: 'sky',
-          stops: [
-            { pos: 0.0, color: hslToHex(h, 65, 8) },
-            { pos: 0.3, color: hslToHex((h + 20) % 360, 75, 26) },
-            { pos: 0.6, color: hslToHex((h + 45) % 360, 85, 48) },
-            { pos: 0.85, color: hslToHex((h + 70) % 360, 90, 72) },
-            { pos: 1.0, color: hslToHex((h + 85) % 95, 95, 90) }
-          ]
-        });
-      }
-
-      for (let i = 1; i <= 50; i++) {
-        const h = (i * 33 + 170) % 360;
-        ALL_PRESETS.push({
-          id: `gen-met-${i}`,
-          name: `Mineral Ore #${i}`,
-          cat: 'metals',
-          stops: [
-            { pos: 0.0, color: hslToHex(h, 40, 7) },
-            { pos: 0.3, color: hslToHex(h, 50, 23) },
-            { pos: 0.65, color: hslToHex(h, 60, 48) },
-            { pos: 0.85, color: hslToHex(h, 75, 74) },
-            { pos: 1.0, color: '#ffffff' }
-          ]
-        });
-      }
-
-      for (let i = 1; i <= 80; i++) {
-        const h1 = (i * 19) % 360;
-        const h2 = (h1 + 45) % 360;
-        ALL_PRESETS.push({
-          id: `gen-ui-${i}`,
-          name: `Modern UI Smooth #${i}`,
-          cat: 'ui',
-          stops: [
-            { pos: 0.0, color: hslToHex(h1, 75, 22) },
-            { pos: 0.35, color: hslToHex(h1, 80, 48) },
-            { pos: 0.7, color: hslToHex(h2, 85, 62) },
-            { pos: 1.0, color: hslToHex(h2, 90, 82) }
-          ]
-        });
-      }
-    })();
+    
 
     function getStoredCustomPresets() {
       try {
@@ -617,9 +466,6 @@
 
     let customPresets = getStoredCustomPresets();
 
-    /* ==========================================================================
-       3. СОСТОЯНИЕ РЕДАКТОРА
-       ========================================================================== */
     let state = {
       stops: [
         { id: 1, pos: 0.00, color: '#0f380f' },
@@ -650,9 +496,6 @@
       [15/16,  7/16, 13/16,  5/16]
     ];
 
-    /* ==========================================================================
-       4. DOM ЭЛЕМЕНТЫ
-       ========================================================================== */
     const mainGradientCanvas = document.getElementById('mainGradientCanvas');
     const mainCtx = mainGradientCanvas.getContext('2d');
     const gradientBarTrack = document.getElementById('gradientBarTrack');
@@ -694,9 +537,6 @@
     const btnConfirmSaveCustom = document.getElementById('btnConfirmSaveCustom');
     const inputCustomName = document.getElementById('inputCustomName');
 
-    /* ==========================================================================
-       5. РАСЧЕТ И СЭМПЛИРОВАНИЕ РАМПЫ
-       ========================================================================== */
     function applyCurve(t, mode) {
       switch (mode) {
         case 'smoothstep': return t * t * (3 - 2 * t);
@@ -754,9 +594,6 @@
       return { r: Math.round(r), g: Math.round(g), b: Math.round(b) };
     }
 
-    /* ==========================================================================
-       6. РЕНДЕР ИНТЕРАКТИВНОГО БАРА И МАРКЕРОВ
-       ========================================================================== */
     function renderMainGradientBar() {
       const parentWidth = gradientBarTrack.clientWidth || 300;
       mainGradientCanvas.width = parentWidth;
@@ -906,9 +743,6 @@
       updateUI();
     });
 
-    /* ==========================================================================
-       7. 7 РЕЖИМОВ ПРЕДПРОСМОТРА
-       ========================================================================== */
     function renderPreview() {
       if (state.previewMode === 'ramp') renderRampTexture();
       else if (state.previewMode === 'sphere') renderCelSphere();
@@ -1141,9 +975,6 @@
       requestAnimationFrame(animationLoop);
     }
 
-    /* ==========================================================================
-       8. ГЕНЕРАЦИЯ КОДА (CSS / HEX / GLSL)
-       ========================================================================== */
     function updateCodeOutput() {
       const sorted = [...state.stops].sort((a, b) => a.pos - b.pos);
 
@@ -1202,9 +1033,6 @@
       }
     });
 
-    /* ==========================================================================
-       9. КАТАЛОГ ПРЕСЕТОВ С CANVAS-ПЛАШКАМИ И СВОТЧАМИ
-       ========================================================================== */
     function renderPresetsCatalog() {
       presetsContainer.innerHTML = '';
 
@@ -1342,9 +1170,6 @@
       document.querySelector('.cat-pill[data-cat="custom"]').click();
     });
 
-    /* ==========================================================================
-       10. ЭКСПОРТ PNG И ДЕЙСТВИЯ
-       ========================================================================== */
     function downloadRampPng() {
       const w = state.width, h = state.height;
       const exportCanvas = document.createElement('canvas');

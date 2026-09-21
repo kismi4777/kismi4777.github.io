@@ -252,10 +252,6 @@ h1 b {
   line-height:1.5}
 .pipe-box b {
   color:#eee}
-/* ========================================================
-   INCREMENTAL GAME ENGINE (VIRUS LAB EVOLUTION)
-======================================================== */
-
 .game-section {
   margin:24px 0 40px}
 .lab-container {
@@ -265,8 +261,6 @@ h1 b {
   border-radius:10px;
   overflow:hidden;
   box-shadow:0 25px 60px rgba(0,0,0,0.85)}
-/* TOP STATUS HUD */
-
 .lab-hud {
   display:grid;
   grid-template-columns:1fr auto 1fr;
@@ -1185,7 +1179,7 @@ button,
     <div class="badge">UNITY DEVELOPER · 3D GENERALIST · TECH ARTIST</div>
     <h1>CODE. ART.<br><b>PRODUCTION.</b></h1>
     <p class="pitch">
-      Боевой модуль production-линии: от <b>Game-Ready 3D под ключ</b> (модели, скелет, IK, шейдеры) до <b>масштабируемой C# архитектуры</b> и <b>жёсткой мобильной оптимизации</b>. Без багов и дедлайновых срывов.
+      <b>Game-Ready 3D</b> и <b>Unity/C#</b> под production: модели, риг, IK, шейдеры, архитектура и мобильная оптимизация — от первой механики до релизного билда.
     </p>
 
     <div class="metrics">
@@ -1203,7 +1197,7 @@ button,
       </div>
       <div class="m-card">
         <div class="val">−40%</div>
-        <div class="desc"><b>Draw Calls & Profiling</b><br>Zero Alloc Pooling, URP, сборка билдов на 30% быстрее</div>
+        <div class="desc"><b>Draw Calls & Profiling</b><br>Object pooling, URP, сборка билдов до 30% быстрее</div>
       </div>
     </div>
 
@@ -1279,7 +1273,7 @@ button,
       </div>
 
       <div class="core-viewport" id="coreViewport">
-        <div class="frenzy-alert" id="frenzyAlert">🔥 НЕЙРОННЫЙ ОВЕРДРАЙВ x5 // СПАМЬ ТАПАМИ!</div>
+        <div class="frenzy-alert" id="frenzyAlert">НЕЙРОННЫЙ ОВЕРДРАЙВ x5 — СПАМЬ ТАПАМИ</div>
         <canvas id="game-canvas"></canvas>
         <div class="core-hint">ТАПАЙ ПО ВИРУСНОМУ ЯДРУ ДЛЯ СБОРА ДНК</div>
         <div class="mutate-overlay" id="mutateOverlay">
@@ -1369,11 +1363,11 @@ button,
     </div>
 
     <div class="tools-grid">
-      <a class="tool-card" href="tools/html-code-studio.html" target="_blank" rel="noopener">
+      <a class="tool-card" href="html-code-studio.html" target="_blank" rel="noopener">
         <span class="tool-tag">// 01. EDITOR</span>
         <h3>HTML Code Studio</h3>
         <p>
-          Безлимитный редактор HTML/CSS/JS с живым превью, шаблонами, автосохранением и экспортом файла под кастомным именем.
+          Редактор HTML/CSS/JS с live preview, шаблоном и экспортом файла.
         </p>
         <div class="tool-meta">
           <span class="tool-stack">HTML · Live Preview · Export</span>
@@ -1381,11 +1375,12 @@ button,
         </div>
       </a>
 
-      <a class="tool-card" href="tools/ramp-studio.html" target="_blank" rel="noopener">
+      <a class="tool-card" href="ramp-studio.html" target="_blank" rel="noopener">
         <span class="tool-tag">// 02. COLOR</span>
         <h3>RampStudio</h3>
         <p>
-          Генератор цветовых градиентов и LUT-текстур: интерактивные стопы, экспорт PNG, палитры под шейдеры и пиксель-арт.
+        <p>
+          Градиенты и LUT: стопы, экспорт PNG, палитры под шейдеры и пиксель-арт.
         </p>
         <div class="tool-meta">
           <span class="tool-stack">Gradients · LUT · PNG</span>
@@ -1681,8 +1676,7 @@ button,
         }
       }
     } catch (error) {
-      console.warn('Unable to load saved game state:', error);
-    }
+           }
 
     state.dna = Math.max(0, state.dna);
     state.clickLevel = Math.max(1, Math.floor(state.clickLevel));
@@ -1716,8 +1710,7 @@ button,
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (error) {
-      console.warn('Unable to save game state:', error);
-    }
+           }
 
     syncLeaderboardEntry();
   }
@@ -1914,8 +1907,7 @@ button,
         }
       }
     } catch (error) {
-      console.warn('Geo lookup failed:', error);
-    }
+           }
 
     if (result.city === 'неизвестно') {
       try {
@@ -1973,8 +1965,7 @@ button,
     try {
       localStorage.setItem(PLAYER_KEY, JSON.stringify(profile));
     } catch (error) {
-      console.warn('Unable to save player profile:', error);
-    }
+           }
   }
 
   const player = loadPlayerProfile();
@@ -2007,8 +1998,7 @@ button,
     try {
       localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(rows.slice(0, 50)));
     } catch (error) {
-      console.warn('Unable to save leaderboard:', error);
-    }
+           }
   }
 
   function updateMetaChips() {
@@ -2320,8 +2310,7 @@ button,
 
       return audioContext;
     } catch (error) {
-      console.warn('Audio is unavailable:', error);
-      return null;
+             return null;
     }
   }
 
@@ -2353,8 +2342,7 @@ button,
       oscillator.start(startTime);
       oscillator.stop(endTime);
     } catch (error) {
-      console.warn('Unable to play sound:', error);
-    }
+           }
   }
 
   elements.audioToggle?.addEventListener('click', () => {
@@ -2410,8 +2398,7 @@ button,
       showToast(message);
       playSound(880, 'triangle', 0.08, 0.025);
     } catch (error) {
-      console.warn('Unable to copy text:', error);
-      showToast('СКОПИРОВАТЬ НЕ УДАЛОСЬ');
+             showToast('СКОПИРОВАТЬ НЕ УДАЛОСЬ');
     }
   }
 
@@ -3093,8 +3080,7 @@ button,
       resizeThree();
       requestAnimationFrame(renderThree);
     } catch (error) {
-      console.warn('Three.js initialization failed:', error);
-    }
+           }
   }
 
   function createLights() {

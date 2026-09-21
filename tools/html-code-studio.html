@@ -4,16 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HTML Code Studio & Exporter</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .code-font { font-family: 'Fira Code', monospace; }
-        /* Custom scrollbar for editors */
+        body { font-family: 'Space Grotesk', sans-serif; }
+        .code-font { font-family: 'JetBrains Mono', monospace; }
+        
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #1e293b; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
@@ -23,21 +20,20 @@
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
 
     <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 shadow-lg">
+        <a href="../index.html" class="text-xs text-slate-400 hover:text-[#c9ff19] transition mr-2">← Portfolio</a>
         <div class="flex items-center space-x-3">
-            <div class="bg-indigo-600 p-2.5 rounded-xl shadow-md shadow-indigo-500/30 flex items-center justify-center text-white font-bold text-lg">
+            <div class="bg-[#c9ff19] p-2.5 rounded-xl shadow-md shadow-[#c9ff19]/25 flex items-center justify-center text-[#08080a] font-bold text-lg">
                 <i class="fa-solid fa-code"></i>
             </div>
             <div>
                 <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                    HTML Code Studio <span class="text-xs uppercase px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">v2.0</span>
+                    HTML Code Studio
                 </h1>
-                <p class="text-xs text-slate-400">Безлимитный редактор кода, кастомное имя файла и живой предпросмотр</p>
+                <p class="text-xs text-slate-400">HTML/CSS/JS редактор с live preview и экспортом</p>
             </div>
         </div>
 
-        <!-- Action Toolbar with Filename Input & Export -->
         <div class="flex items-center flex-wrap gap-2.5">
-            <!-- Filename input group -->
             <div class="flex items-center bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 shadow-inner">
                 <i class="fa-solid fa-file-pen text-slate-400 mr-2 text-xs"></i>
                 <input type="text" id="filename-input" value="index.html" placeholder="filename.html" 
@@ -50,18 +46,17 @@
             <button onclick="app.copyCode()" class="px-3 py-2 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-2 shadow-sm" title="Копировать код">
                 <i class="fa-regular fa-copy text-sky-400"></i> Копировать
             </button>
-            <button onclick="app.exportFile()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-2 shadow-md shadow-indigo-600/30">
+            <button onclick="app.exportFile()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-[#c9ff19] hover:bg-[#d6ff4d] text-[#08080a] transition flex items-center gap-2 shadow-md shadow-[#c9ff19]/25">
                 <i class="fa-solid fa-download"></i> Сохранить .html
             </button>
         </div>
     </header>
 
-    <!-- Responsive View Toggles for Mobile / Split Screen for Desktop -->
     <div class="bg-slate-900/50 border-b border-slate-800/80 px-6 py-2 flex items-center justify-between text-xs text-slate-400">
         <div class="flex items-center gap-4">
-            <span class="font-medium text-slate-300"><i class="fa-solid fa-desktop mr-1.5 text-indigo-400"></i> Рабочая область:</span>
+            <span class="font-medium text-slate-300"><i class="fa-solid fa-desktop mr-1.5 text-[#c9ff19]"></i> Рабочая область:</span>
             <div class="inline-flex rounded-lg bg-slate-800 p-0.5 border border-slate-700">
-                <button onclick="app.switchView('split')" id="btn-view-split" class="px-3 py-1 rounded-md text-xs font-medium bg-indigo-600 text-white transition shadow">Раздельно</button>
+                <button onclick="app.switchView('split')" id="btn-view-split" class="px-3 py-1 rounded-md text-xs font-medium bg-[#c9ff19] text-[#08080a] transition shadow">Раздельно</button>
                 <button onclick="app.switchView('editor')" id="btn-view-editor" class="px-3 py-1 rounded-md text-xs font-medium text-slate-300 hover:text-white transition">Только код</button>
                 <button onclick="app.switchView('preview')" id="btn-view-preview" class="px-3 py-1 rounded-md text-xs font-medium text-slate-300 hover:text-white transition">Только превью</button>
             </div>
@@ -73,7 +68,6 @@
 
     <main id="main-grid" class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 md:p-6 overflow-hidden">
         
-        <!-- Editor Section -->
         <section id="pane-editor" class="flex flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl min-h-[400px] lg:min-h-0">
             <div class="bg-slate-900/80 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
                 <div class="flex items-center space-x-2">
@@ -83,7 +77,7 @@
                         <div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
                     </div>
                     <span class="text-xs font-semibold text-slate-300 ml-2 uppercase tracking-wider flex items-center gap-1.5">
-                        <i class="fa-solid fa-file-code text-indigo-400"></i> Редактор кода (Неограниченная длина)
+                        <i class="fa-solid fa-file-code text-[#c9ff19]"></i> Редактор кода
                     </span>
                 </div>
                 <div class="flex items-center space-x-3 text-xs text-slate-400">
@@ -197,29 +191,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Интерактивная страница</title>
-    <!-- Tailwind CSS -->
+    <title>Preview</title>
     <script src="https://cdn.tailwindcss.com"><\/script>
 </head>
-<body class="bg-gradient-to-tr from-slate-900 via-purple-950 to-slate-900 text-white min-h-screen flex items-center justify-center p-6">
-    <div class="max-w-lg w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl text-center">
-        <div class="w-16 h-16 bg-gradient-to-r from-pink-500 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-indigo-500/40">
-            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-            </svg>
-        </div>
-        <h1 class="text-3xl font-extrabold mb-3 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">Привет из HTML Studio!</h1>
-        <p class="text-slate-300 text-sm mb-8 leading-relaxed">Этот код написан в безлимитном редакторе. Вы можете вставлять сколько угодно строк кода, менять название файла и мгновенно скачивать готовый проект.</p>
-        <button onclick="alertBox('Кнопка работает отлично!')" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 font-semibold rounded-2xl transition shadow-lg shadow-indigo-600/40 transform active:scale-95">
-            Нажми меня
+<body class="bg-[#08080a] text-white min-h-screen flex items-center justify-center p-6">
+    <div class="max-w-md w-full border border-white/10 rounded-xl p-8 text-center bg-[#121217]">
+        <div class="w-12 h-12 mx-auto mb-5 rounded-lg bg-[#c9ff19] text-[#08080a] flex items-center justify-center font-bold">H</div>
+        <h1 class="text-2xl font-bold mb-3 tracking-tight">HTML Code Studio</h1>
+        <p class="text-slate-400 text-sm mb-6 leading-relaxed">Редактируй слева — превью обновляется справа. Экспортируй готовый файл когда закончишь.</p>
+        <button onclick="alert('OK')" class="w-full py-3 bg-[#c9ff19] hover:bg-[#d6ff4d] text-[#08080a] font-semibold rounded-lg transition">
+            Проверить клик
         </button>
     </div>
-
-    <script>
-        function alertBox(msg) {
-            alert(msg);
-        }
-    <\/script>
 </body>
 </html>`;
             }
@@ -228,7 +211,7 @@
                 this.editor.value = this.getDefaultTemplate();
                 this.filenameInput.value = 'index.html';
                 this.onEditorInput();
-                this.showToast('Шаблон загружен', 'Красивый стартовый шаблон успешно добавлен', 'success');
+                this.showToast('Шаблон загружен', 'Стартовый шаблон вставлен', 'success');
             }
 
             onEditorInput() {
@@ -291,15 +274,15 @@
                 mainGrid.className = "flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 md:p-6 overflow-hidden";
 
                 if (mode === 'split') {
-                    btnSplit.className = "px-3 py-1 rounded-md text-xs font-medium bg-indigo-600 text-white transition shadow";
+                    btnSplit.className = "px-3 py-1 rounded-md text-xs font-medium bg-[#c9ff19] text-[#08080a] transition shadow";
                 } else if (mode === 'editor') {
                     panePreview.classList.add('hidden');
                     mainGrid.className = "flex-1 grid grid-cols-1 gap-4 p-4 md:p-6 overflow-hidden";
-                    btnEditor.className = "px-3 py-1 rounded-md text-xs font-medium bg-indigo-600 text-white transition shadow";
+                    btnEditor.className = "px-3 py-1 rounded-md text-xs font-medium bg-[#c9ff19] text-[#08080a] transition shadow";
                 } else if (mode === 'preview') {
                     paneEditor.classList.add('hidden');
                     mainGrid.className = "flex-1 grid grid-cols-1 gap-4 p-4 md:p-6 overflow-hidden";
-                    btnPreview.className = "px-3 py-1 rounded-md text-xs font-medium bg-indigo-600 text-white transition shadow";
+                    btnPreview.className = "px-3 py-1 rounded-md text-xs font-medium bg-[#c9ff19] text-[#08080a] transition shadow";
                 }
             }
 
