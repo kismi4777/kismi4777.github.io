@@ -19,8 +19,10 @@ Then open [http://127.0.0.1:5500](http://127.0.0.1:5500).
 | `tools/ramp-studio.html` | Gradient / LUT generator |
 | `tools/gameplay-lab-demo.html` | Extended gameplay lab |
 
-## Contact
+## Online leaderboard
 
-- Telegram: [@Kwadratik](https://t.me/Kwadratik)
-- Email: nikita.bychkov.93@bk.ru
-- Phone: +7 (965) 295-97-13
+The players table is stored in the cloud ([KVdb](https://kvdb.io)), not in GitHub Pages files.
+
+**One-time activation:** open [https://kvdb.io/login](https://kvdb.io/login) and verify `nikita.bychkov.93@bk.ru` (activation email was sent when the bucket was created). Until then the UI shows «нужна активация» and keeps a local cache.
+
+Config: `leaderboard-config.js`

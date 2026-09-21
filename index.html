@@ -1319,8 +1319,8 @@ button,
           <div class="lb-head">
             <h3>ТАБЛИЦА ИГРОКОВ</h3>
             <p>
-              Имя необязательно — без него ты всё равно в таблице как <b>Гость-XXXX</b>.
-              Город определяется по IP приблизительно.
+              Онлайн-таблица всех визитов. Имя необязательно — без него ты как <b>Гость-XXXX</b>.
+              Город по IP приблизительно. Данные хранятся в облаке и не сбрасываются при обновлении сайта.
             </p>
           </div>
           <div class="lb-identity">
@@ -1329,6 +1329,7 @@ button,
           </div>
           <div class="lb-you" id="lbYou">Ты: —</div>
           <div class="lb-meta" id="lbMeta">
+            <span class="lb-chip">Сеть: <b id="chipOnline">подключение…</b></span>
             <span class="lb-chip">Устройство: <b id="chipDevice">…</b></span>
             <span class="lb-chip">Город: <b id="chipCity">…</b></span>
           </div>
@@ -1424,6 +1425,7 @@ button,
 <footer>© 2026 Никита Бычков — Unity Developer · Tech Artist · 3D Generalist</footer>
 <div class="toast" id="toast">СКОПИРОВАНО!</div>
 
+<script src="leaderboard-config.js"></script>
 <script>
 (() => {
   'use strict';
@@ -1458,6 +1460,7 @@ button,
     lbEmpty: document.getElementById('lbEmpty'),
     chipDevice: document.getElementById('chipDevice'),
     chipCity: document.getElementById('chipCity'),
+    chipOnline: document.getElementById('chipOnline'),
     mutateOverlay: document.getElementById('mutateOverlay'),
     mutateTimer: document.getElementById('mutateTimer'),
     goalEarn: document.getElementById('goalEarn'),
@@ -1943,7 +1946,8 @@ button,
           name: typeof saved.name === 'string' ? saved.name.slice(0, 24) : '',
           code: saved.code || makeGuestCode(),
           device: saved.device || deviceInfo.label,
-          city: saved.city || ''
+          city: saved.city || '',
+          firstSeen: Number(saved.firstSeen) || 0
         };
       }
     } catch (_) {}
@@ -1954,7 +1958,8 @@ button,
       name: '',
       code,
       device: deviceInfo.label,
-      city: ''
+      city: '',
+      firstSeen: 0
     };
     savePlayerProfile(profile);
     return profile;
@@ -1974,65 +1979,217 @@ button,
     return custom || `Гость-${profile.code || 'XXXX'}`;
   }
 
-  function loadLeaderboard() {
+  const LB_CFG = window.LAB_LEADERBOARD || {};
+  const LB_BUCKET = String(LB_CFG.bucket || '');
+  const LB_WRITE_KEY = String(LB_CFG.writeKey || '');
+  let onlineRows = [];
+  let onlineStatus = 'подключение…';
+  let syncBusy = false;
+  let lastOnlineSync = 0;
+
+  function setOnlineStatus(text) {
+    onlineStatus = text;
+    if (elements.chipOnline) elements.chipOnline.textContent = text;
+  }
+
+  function normalizeRow(row) {
+    if (!row || !row.id) return null;
+    return {
+      id: String(row.id),
+      name: String(row.name || '').slice(0, 32),
+      evo: Math.max(0, Math.floor(Number(row.evo) || 0)),
+      device: String(row.device || '—').slice(0, 80),
+      city: String(row.city || '—').slice(0, 80),
+      updatedAt: Number(row.updatedAt) || 0,
+      firstSeen: Number(row.firstSeen) || Number(row.updatedAt) || 0
+    };
+  }
+
+  function loadLeaderboardLocal() {
     try {
       const saved = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || '[]');
       if (!Array.isArray(saved)) return [];
-      return saved
-        .filter(row => row && row.id)
-        .map(row => ({
-          id: String(row.id),
-          name: String(row.name || '').slice(0, 32),
-          evo: Math.max(0, Number(row.evo) || 0),
-          device: String(row.device || '—').slice(0, 64),
-          city: String(row.city || '—').slice(0, 64),
-          updatedAt: Number(row.updatedAt) || 0
-        }));
+      return saved.map(normalizeRow).filter(Boolean);
     } catch (_) {
       return [];
     }
   }
 
-  function saveLeaderboard(rows) {
+  function saveLeaderboardLocal(rows) {
     try {
-      localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(rows.slice(0, 50)));
+      localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(rows.slice(0, 200)));
+    } catch (_) {}
+  }
+
+  function loadLeaderboard() {
+    return (onlineRows.length ? onlineRows : loadLeaderboardLocal())
+      .slice()
+      .sort((a, b) => b.evo - a.evo || b.updatedAt - a.updatedAt);
+  }
+
+  function kvdbUrl(path = '') {
+    return `https://kvdb.io/${encodeURIComponent(LB_BUCKET)}/${path.replace(/^\//, '')}`;
+  }
+
+  async function pushOnlineEntry(entry) {
+    if (!LB_BUCKET) throw new Error('no bucket');
+    const headers = { 'Content-Type': 'application/json' };
+    if (LB_WRITE_KEY) {
+      headers.Authorization = `Basic ${btoa(`${LB_WRITE_KEY}:`)}`;
+    }
+    const response = await fetch(kvdbUrl(`p/${encodeURIComponent(entry.id)}`), {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(entry)
+    });
+    const text = await response.text();
+    if (!response.ok) {
+      const err = new Error(text || `write ${response.status}`);
+      err.status = response.status;
+      err.body = text;
+      throw err;
+    }
+    return entry;
+  }
+
+  async function fetchOnlinePlayer(id) {
+    const response = await fetch(`https://kvdb.io/${encodeURIComponent(LB_BUCKET)}/p/${encodeURIComponent(id)}`, {
+      cache: 'no-store'
+    });
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error(`read ${response.status}`);
+    const text = await response.text();
+    try {
+      return normalizeRow(JSON.parse(text));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  async function fetchOnlineLeaderboard() {
+    if (!LB_BUCKET) {
+      setOnlineStatus('нет конфига');
+      return loadLeaderboardLocal();
+    }
+
+    const listRes = await fetch(
+      `https://kvdb.io/${encodeURIComponent(LB_BUCKET)}/?prefix=${encodeURIComponent('p/')}`,
+      { cache: 'no-store' }
+    );
+    if (!listRes.ok) throw new Error(`list ${listRes.status}`);
+    const listText = (await listRes.text()).trim();
+    const keys = listText
+      ? listText.split(/\r?\n/).map(s => s.trim()).filter(Boolean)
+      : [];
+
+    const rows = [];
+    const chunkSize = 12;
+    for (let i = 0; i < keys.length; i += chunkSize) {
+      const chunk = keys.slice(i, i + chunkSize);
+      const part = await Promise.all(
+        chunk.map(async key => {
+          const id = key.replace(/^p\//, '');
+          try {
+            return await fetchOnlinePlayer(id);
+          } catch (_) {
+            return null;
+          }
+        })
+      );
+      part.filter(Boolean).forEach(row => rows.push(row));
+    }
+
+    onlineRows = rows;
+    saveLeaderboardLocal(rows);
+    setOnlineStatus(`онлайн · ${rows.length}`);
+    return rows;
+  }
+
+  function buildLocalEntry() {
+    const now = Date.now();
+    return {
+      id: player.id,
+      name: getPlayerDisplayName(),
+      evo: Math.max(0, Math.floor(state.totalEarned)),
+      device: player.device || deviceInfo.label,
+      city: player.city || networkInfo.city || '—',
+      updatedAt: now,
+      firstSeen: Number(player.firstSeen) || now
+    };
+  }
+
+  async function syncLeaderboardEntry(force = false) {
+    if (syncBusy) return;
+    if (!force && Date.now() - lastOnlineSync < 4000) {
+      // Still refresh local cache mirror for snappy UI.
+      const local = loadLeaderboardLocal();
+      const entry = buildLocalEntry();
+      const idx = local.findIndex(row => row.id === entry.id);
+      if (idx >= 0) local[idx] = { ...local[idx], ...entry, firstSeen: local[idx].firstSeen || entry.firstSeen };
+      else local.push(entry);
+      saveLeaderboardLocal(local);
+      if (!onlineRows.length) onlineRows = local;
+      else {
+        const oi = onlineRows.findIndex(row => row.id === entry.id);
+        if (oi >= 0) onlineRows[oi] = { ...onlineRows[oi], ...entry, firstSeen: onlineRows[oi].firstSeen || entry.firstSeen };
+        else onlineRows.push(entry);
+      }
+      renderLeaderboard();
+      return;
+    }
+
+    syncBusy = true;
+    try {
+      const entry = buildLocalEntry();
+      try {
+        const remote = await fetchOnlinePlayer(entry.id);
+        if (remote) {
+          entry.evo = Math.max(entry.evo, remote.evo || 0);
+          entry.firstSeen = remote.firstSeen || entry.firstSeen;
+          if (!player.firstSeen) {
+            player.firstSeen = entry.firstSeen;
+            savePlayerProfile(player);
+          }
+        } else if (!player.firstSeen) {
+          player.firstSeen = entry.firstSeen;
+          savePlayerProfile(player);
+        }
+      } catch (_) {}
+
+      await pushOnlineEntry(entry);
+      lastOnlineSync = Date.now();
+      await fetchOnlineLeaderboard();
+      renderLeaderboard();
     } catch (error) {
-           }
+      const local = loadLeaderboardLocal();
+      const entry = buildLocalEntry();
+      const idx = local.findIndex(row => row.id === entry.id);
+      if (idx >= 0) local[idx] = { ...local[idx], ...entry };
+      else local.push(entry);
+      saveLeaderboardLocal(local);
+      onlineRows = local;
+      const msg = String(error.body || error.message || '');
+      if (/not verified|activate/i.test(msg)) {
+        setOnlineStatus('нужна активация');
+      } else {
+        setOnlineStatus('офлайн-кэш');
+      }
+      renderLeaderboard();
+    } finally {
+      syncBusy = false;
+    }
   }
 
   function updateMetaChips() {
+    if (elements.chipOnline) {
+      elements.chipOnline.textContent = onlineStatus;
+    }
     if (elements.chipDevice) {
       elements.chipDevice.textContent = player.device || deviceInfo.label;
     }
     if (elements.chipCity) {
       elements.chipCity.textContent = player.city || networkInfo.city || '…';
     }
-  }
-
-  function syncLeaderboardEntry() {
-    const rows = loadLeaderboard();
-    const displayName = getPlayerDisplayName();
-    const evo = Math.max(0, Math.floor(state.totalEarned));
-    const index = rows.findIndex(row => row.id === player.id);
-
-    const entry = {
-      id: player.id,
-      name: displayName,
-      evo,
-      device: player.device || deviceInfo.label,
-      city: player.city || networkInfo.city || '—',
-      updatedAt: Date.now()
-    };
-
-    if (index >= 0) {
-      rows[index] = entry;
-    } else if (evo > 0 || player.name) {
-      rows.push(entry);
-    }
-
-    rows.sort((a, b) => b.evo - a.evo || b.updatedAt - a.updatedAt);
-    saveLeaderboard(rows);
-    renderLeaderboard();
   }
 
   function escapeHtml(value) {
@@ -2044,7 +2201,7 @@ button,
   }
 
   function renderLeaderboard() {
-    const rows = loadLeaderboard().sort((a, b) => b.evo - a.evo || b.updatedAt - a.updatedAt);
+    const rows = loadLeaderboard();
     const youName = getPlayerDisplayName();
 
     updateMetaChips();
@@ -2070,7 +2227,7 @@ button,
 
     if (elements.lbEmpty) elements.lbEmpty.style.display = 'none';
 
-    rows.slice(0, 20).forEach((row, index) => {
+    rows.slice(0, 100).forEach((row, index) => {
       const card = document.createElement('article');
       card.className = 'lb-card' + (row.id === player.id ? ' is-you' : '');
       const suffix = row.id === player.id
@@ -2102,7 +2259,7 @@ button,
       panel.classList.toggle('active', panel.getAttribute('data-lab-panel') === next);
     });
     if (next === 'players') {
-      renderLeaderboard();
+      syncLeaderboardEntry(true);
     }
   }
 
@@ -2114,14 +2271,14 @@ button,
     player.city = networkInfo.city || player.city || 'неизвестно';
     savePlayerProfile(player);
     updateMetaChips();
-    syncLeaderboardEntry();
+    await syncLeaderboardEntry(true);
   }
 
   function applyPlayerName() {
     const nextName = String(elements.playerNameInput?.value || '').trim().slice(0, 24);
     player.name = nextName;
     savePlayerProfile(player);
-    syncLeaderboardEntry();
+    syncLeaderboardEntry(true);
     showToast(nextName ? 'ИМЯ СОХРАНЕНО' : 'ОТОБРАЖАЕШЬСЯ КАК ГОСТЬ');
     playSound(720, 'triangle', 0.08, 0.025);
   }
@@ -3293,8 +3450,9 @@ button,
   updateMetaChips();
   initializeThree();
   renderUI(true);
-  syncLeaderboardEntry();
+  syncLeaderboardEntry(true);
   refreshNetworkProfile();
+  setInterval(() => syncLeaderboardEntry(true), 45000);
   renderBackground();
   requestAnimationFrame(updateGame);
 })();
