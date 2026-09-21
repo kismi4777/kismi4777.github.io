@@ -228,8 +228,46 @@ h1 b {
 .btn-outline:hover {
   border-color:#fff;
   transform:translateY(-2px)}
+/* PIPELINE */
+
+.pipeline-strip {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:12px;
+  margin-top:18px}
+.pipe-box {
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--border);
+  padding:15px;
+  border-radius:6px}
+.pipe-box h3 {
+  font-family:var(--font-title);
+  font-size:13px;
+  color:var(--cyan);
+  margin-bottom:6px;
+  letter-spacing:0.04em}
+.pipe-box p {
+  font-size:11px;
+  color:#888994;
+  line-height:1.5}
+.pipe-box b {
+  color:#eee}
 .game-section {
   margin:24px 0 40px}
+.game-head {
+  margin-bottom:22px}
+.game-head h2 {
+  font-family:var(--font-title);
+  font-size:clamp(28px,4.5vw,46px);
+  line-height:1;
+  margin-bottom:12px}
+.game-head h2 span {
+  color:var(--acid)}
+.game-head p {
+  color:#9e9ea7;
+  max-width:640px;
+  font-size:13px;
+  line-height:1.6}
 .lab-container {
   position:relative;
   background:#09090d;
@@ -952,29 +990,32 @@ to {
   letter-spacing:0.06em;
   text-transform:uppercase}
 .contacts {
-  background:var(--panel);
-  border:1px solid var(--border);
-  padding:36px 28px;
-  border-radius:8px;
-  margin-bottom:40px;
-  backdrop-filter:blur(10px)}
-.contacts h2 {
+  margin:8px 0 40px}
+.contacts-head {
+  margin-bottom:22px}
+.contacts-head h2 {
   font-family:var(--font-title);
   font-size:clamp(28px,4.5vw,46px);
   line-height:1;
-  margin-bottom:14px}
-.contacts h2 span {
+  margin-bottom:12px}
+.contacts-head h2 span {
   color:var(--acid)}
-.contacts p {
+.contacts-head p {
   color:#9e9ea7;
   max-width:620px;
   font-size:13px;
   line-height:1.6}
+.contact-panel {
+  background:var(--panel);
+  border:1px solid var(--border);
+  padding:22px 20px;
+  border-radius:8px;
+  backdrop-filter:blur(10px)}
 .contact-links {
   display:flex;
   flex-direction:column;
   gap:10px;
-  margin-top:22px}
+  margin-top:0}
 .link-btn {
   display:flex;
   align-items:center;
@@ -1185,10 +1226,33 @@ button,
       <a href="#tools" class="btn-outline">TOOLS ↓</a>
       <a href="https://t.me/Kwadratik" target="_blank" rel="noopener" class="btn-outline">TELEGRAM ↗</a>
     </div>
+
+    <div class="pipeline-strip">
+      <div class="pipe-box">
+        <h3>// 01. 3D & GAME-READY</h3>
+        <p><b>Blender, 3ds Max, ZBrush, Substance, Marvelous, 3D-Coat.</b> Персонажи, пропсы, окружение, ретопология, риг костей + IK, анимация и текстурные атласы под ключ.</p>
+      </div>
+      <div class="pipe-box">
+        <h3>// 02. TECH ART & SHADERS</h3>
+        <p><b>Shader Graph, HLSL, URP, Lighting & Bake.</b> Интеграция ассетов в движок, настройка материалов, визуальных эффектов и пост-процессинга под мобильные лимиты.</p>
+      </div>
+      <div class="pipe-box">
+        <h3>// 03. CODING & RELEASE</h3>
+        <p><b>C#, Паттерны, Profiler, Git.</b> Опыт в Essentric Games, Duat Games, Pixapp, 3DBNK. Игры от первой механики до релизного билда.</p>
+      </div>
+    </div>
   </section>
 
   <!-- INCREMENTAL LAB GAME -->
   <section class="game-section" id="playable">
+    <div class="game-head">
+      <h2>GAMEPLAY LAB<br><span>LIVE IN BROWSER.</span></h2>
+      <p>
+        Инкрементальная лаборатория прямо на сайте: тапай ядро, качай системы, эволюционируй штамм.
+        Прогресс сохраняется на устройстве, таблица игроков — общая и онлайн.
+      </p>
+    </div>
+
     <div class="lab-container">
       <div class="lab-tabs" role="tablist">
         <button class="lab-tab active" type="button" data-lab-tab="lab" role="tab" aria-selected="true">ЛАБОРАТОРИЯ</button>
@@ -1352,28 +1416,32 @@ button,
 
   <!-- CONTACTS -->
   <section class="contacts" id="contacts">
-    <h2>LET'S SHIP<br><span>HIT GAMES.</span></h2>
-    <p>
-      Готов закрыть ключевые звенья пайплайна как <b>Middle Unity Developer</b>, <b>Technical Artist</b> или <b>3D Generalist</b>. Удалённо или гибрид.
-    </p>
-    
-    <div class="contact-links">
-      <a href="https://t.me/Kwadratik" target="_blank" rel="noopener" class="link-btn link-btn--accent">
-        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-        <span>TELEGRAM: @Kwadratik</span>
-      </a>
-      <button class="link-btn" data-copy-email>
-        <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-        <span>nikita.bychkov.93@bk.ru</span>
-      </button>
-      <a href="https://www.artstation.com/kismich" target="_blank" rel="noopener" class="link-btn">
-        <svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
-        <span>ARTSTATION</span>
-      </a>
-      <a href="https://yandex.ru/games/app/evoliutsiia-virusov-sliianie-v-laboratorii-594042?utm_source=app_page#menu" target="_blank" rel="noopener" class="link-btn">
-        <svg viewBox="0 0 24 24"><line x1="6" y1="12" x2="10" y2="12"></line><line x1="8" y1="10" x2="8" y2="14"></line><line x1="15" y1="13" x2="15.01" y2="13"></line><line x1="18" y1="11" x2="18.01" y2="11"></line><rect x="2" y="6" width="20" height="12" rx="2"></rect></svg>
-        <span>YANDEX GAMES</span>
-      </a>
+    <div class="contacts-head">
+      <h2>LET'S SHIP<br><span>HIT GAMES.</span></h2>
+      <p>
+        Готов закрыть ключевые звенья пайплайна как <b>Middle Unity Developer</b>, <b>Technical Artist</b> или <b>3D Generalist</b>. Удалённо или гибрид.
+      </p>
+    </div>
+
+    <div class="contact-panel">
+      <div class="contact-links">
+        <a href="https://t.me/Kwadratik" target="_blank" rel="noopener" class="link-btn link-btn--accent">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          <span>TELEGRAM: @Kwadratik</span>
+        </a>
+        <button class="link-btn" data-copy-email>
+          <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          <span>nikita.bychkov.93@bk.ru</span>
+        </button>
+        <a href="https://www.artstation.com/kismich" target="_blank" rel="noopener" class="link-btn">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+          <span>ARTSTATION</span>
+        </a>
+        <a href="https://yandex.ru/games/app/evoliutsiia-virusov-sliianie-v-laboratorii-594042?utm_source=app_page#menu" target="_blank" rel="noopener" class="link-btn">
+          <svg viewBox="0 0 24 24"><line x1="6" y1="12" x2="10" y2="12"></line><line x1="8" y1="10" x2="8" y2="14"></line><line x1="15" y1="13" x2="15.01" y2="13"></line><line x1="18" y1="11" x2="18.01" y2="11"></line><rect x="2" y="6" width="20" height="12" rx="2"></rect></svg>
+          <span>YANDEX GAMES</span>
+        </a>
+      </div>
     </div>
   </section>
 </main>
