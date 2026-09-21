@@ -6,6 +6,13 @@
       "$id": {
         ".validate": "newData.hasChildren(['id', 'name', 'evo', 'updatedAt']) && newData.child('evo').isNumber() && newData.child('evo').val() >= 0 && newData.child('evo').val() < 1000000000"
       }
+    },
+    "saves": {
+      ".read": true,
+      ".write": true,
+      "$id": {
+        ".validate": "newData.hasChildren(['deviceKey', 'player', 'state', 'updatedAt']) && newData.child('updatedAt').isNumber()"
+      }
     }
   }
 }

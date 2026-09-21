@@ -1479,6 +1479,7 @@ button,
 
   const STORAGE_KEY = 'nikita_portfolio_lab_gameplay_demo_v3';
   const PLAYER_KEY = 'nikita_portfolio_lab_player_v1';
+  const DEVICE_KEY = 'nikita_portfolio_lab_device_v1';
   const LEADERBOARD_KEY = 'nikita_portfolio_lab_leaderboard_v2';
   const NET_CACHE_KEY = 'nikita_portfolio_lab_net_v1';
   const MAX_OFFLINE_SECONDS = 8 * 60 * 60;
@@ -1719,6 +1720,48 @@ button,
 
   function makeGuestCode() {
     return Math.random().toString(36).slice(2, 6).toUpperCase();
+  }
+
+  function hashString(value) {
+    let hash = 2166136261;
+    const text = String(value || '');
+    for (let i = 0; i < text.length; i += 1) {
+      hash ^= text.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(36);
+  }
+
+  function computeDeviceFingerprint() {
+    const nav = navigator;
+    const scr = window.screen || {};
+    const parts = [
+      nav.userAgent || '',
+      nav.language || '',
+      nav.platform || '',
+      String(nav.hardwareConcurrency || 0),
+      String(nav.maxTouchPoints || 0),
+      `${scr.width || 0}x${scr.height || 0}`,
+      String(scr.colorDepth || 0),
+      String(window.devicePixelRatio || 1),
+      String(new Date().getTimezoneOffset())
+    ];
+    return `d_${hashString(parts.join('|'))}`;
+  }
+
+  function getDeviceKey() {
+    try {
+      const saved = String(localStorage.getItem(DEVICE_KEY) || '');
+      if (/^d_[a-z0-9]+$/i.test(saved)) {
+        return saved;
+      }
+    } catch (_) {}
+
+    const key = computeDeviceFingerprint();
+    try {
+      localStorage.setItem(DEVICE_KEY, key);
+    } catch (_) {}
+    return key;
   }
 
   function parseAndroidModel(ua) {
@@ -2108,6 +2151,155 @@ button,
     }
   }
 
+  let cloudSaveTimer = 0;
+  let cloudSaveBusy = false;
+  let lastCloudSaveAt = 0;
+  let cloudRestoreDone = false;
+
+  function buildCloudSavePayload() {
+    const snap = {};
+    for (const key of Object.keys(DEFAULT_STATE)) {
+      snap[key] = state[key];
+    }
+    return {
+      deviceKey: getDeviceKey(),
+      player: {
+        id: player.id,
+        name: player.name || '',
+        code: player.code || '',
+        device: player.device || deviceInfo.label || '',
+        city: player.city || networkInfo.city || ''
+      },
+      state: snap,
+      updatedAt: Date.now()
+    };
+  }
+
+  function normalizeLoadedState(raw) {
+    const next = { ...DEFAULT_STATE };
+    if (!raw || typeof raw !== 'object') return next;
+
+    for (const key of Object.keys(DEFAULT_STATE)) {
+      if (Number.isFinite(Number(raw[key]))) {
+        next[key] = Number(raw[key]);
+      }
+    }
+
+    next.dna = Math.max(0, next.dna);
+    next.clickLevel = Math.max(1, Math.floor(next.clickLevel));
+    next.evolution = Math.max(1, Math.floor(next.evolution));
+    next.totalEarned = Math.max(0, Number(next.totalEarned) || 0);
+    next.phaseEarned = Math.max(0, Number(next.phaseEarned) || 0);
+    next.goalBonus = Math.max(0, Number(next.goalBonus) || 0);
+    next.prestigeLevel = Math.max(0, Math.floor(next.prestigeLevel));
+    next.goalEarnDone = next.goalEarnDone ? 1 : 0;
+    next.goalFrenzyDone = next.goalFrenzyDone ? 1 : 0;
+    next.unstable = next.unstable ? 1 : 0;
+
+    for (const def of UPGRADE_DEFS) {
+      const min = def.start || 0;
+      next[def.key] = Math.max(min, Math.floor(Number(next[def.key]) || min));
+    }
+
+    return next;
+  }
+
+  function isLocalProgressFresh() {
+    return (
+      (Number(state.totalEarned) || 0) <= 0 &&
+      (Number(state.dna) || 0) <= 0 &&
+      (Number(state.clickLevel) || 1) <= 1 &&
+      (Number(state.prestigeLevel) || 0) <= 0
+    );
+  }
+
+  function applyCloudSave(payload) {
+    if (!payload || !payload.state || typeof payload.state !== 'object') return false;
+
+    const remoteState = normalizeLoadedState(payload.state);
+    const remoteScore = Number(remoteState.totalEarned) || 0;
+    const localScore = Number(state.totalEarned) || 0;
+    if (!isLocalProgressFresh() && remoteScore <= localScore) {
+      return false;
+    }
+
+    Object.assign(state, remoteState);
+
+    if (payload.player && payload.player.id) {
+      player.id = String(payload.player.id);
+      player.name = typeof payload.player.name === 'string' ? payload.player.name.slice(0, 24) : player.name;
+      player.code = payload.player.code || player.code || makeGuestCode();
+      player.device = payload.player.device || player.device || deviceInfo.label;
+      player.city = payload.player.city || player.city || '';
+      savePlayerProfile(player);
+    }
+
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (_) {}
+
+    return true;
+  }
+
+  function scheduleCloudSave(force = false) {
+    if (!getFirebaseUrl()) return;
+
+    window.clearTimeout(cloudSaveTimer);
+    cloudSaveTimer = window.setTimeout(() => {
+      pushCloudSave(force).catch(() => {});
+    }, force ? 80 : 2500);
+  }
+
+  async function pushCloudSave(force = false) {
+    const base = getFirebaseUrl();
+    if (!base || cloudSaveBusy) return;
+    if (!force && Date.now() - lastCloudSaveAt < 12000) return;
+
+    cloudSaveBusy = true;
+    try {
+      const payload = buildCloudSavePayload();
+      const res = await fetch(`${base}/saves/${encodeURIComponent(payload.deviceKey)}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error('save put failed');
+      lastCloudSaveAt = Date.now();
+    } catch (_) {
+      // keep local progress; cloud is best-effort
+    } finally {
+      cloudSaveBusy = false;
+    }
+  }
+
+  async function restoreCloudSaveIfNeeded() {
+    const base = getFirebaseUrl();
+    if (!base || cloudRestoreDone) return false;
+    cloudRestoreDone = true;
+
+    try {
+      const deviceKey = getDeviceKey();
+      const res = await fetch(`${base}/saves/${encodeURIComponent(deviceKey)}.json`, {
+        cache: 'no-store'
+      });
+      if (!res.ok) return false;
+      const payload = await res.json();
+      if (!payload) return false;
+
+      const restored = applyCloudSave(payload);
+      if (!restored) return false;
+
+      applyOfflineProgress();
+      renderUI(true);
+      syncLeaderboardEntry();
+      scheduleCloudSave(true);
+      showToast('ПРОГРЕСС ВОССТАНОВЛЕН');
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   function updateMetaChips() {
     if (elements.chipDevice) {
       elements.chipDevice.textContent = player.device || deviceInfo.label;
@@ -2142,6 +2334,7 @@ button,
     saveLeaderboard(rows);
     renderLeaderboard();
     scheduleOnlineSync(false);
+    scheduleCloudSave(false);
   }
 
   function escapeHtml(value) {
@@ -3402,11 +3595,14 @@ button,
   player.device = deviceInfo.label;
   updateMetaChips();
   setOnlineChip(getFirebaseUrl() ? 'подключение…' : 'локально');
+  getDeviceKey();
   initializeThree();
   renderUI(true);
   syncLeaderboardEntry();
   refreshNetworkProfile();
+  restoreCloudSaveIfNeeded();
   setInterval(() => scheduleOnlineSync(true), 60000);
+  setInterval(() => scheduleCloudSave(true), 90000);
   renderBackground();
   requestAnimationFrame(updateGame);
 })();
