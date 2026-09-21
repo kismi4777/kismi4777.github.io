@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>RampStudio // Генератор Цветовых Рамп и LUT-Текстур</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            retro: {
+              900: '#0c0f12',
+              850: '#12171d',
+              800: '#182026',
+              700: '#24303a',
+              600: '#344554',
+              accent: '#38ef7d',
+              accentHover: '#11998e',
+              amber: '#f59e0b',
+              cyber: '#00f0ff'
+            }
+          },
+          fontFamily: {
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg-900: #0c0f12;
+      --bg-850: #12171d;
+      --bg-800: #182026;
+      --border-700: #24303a;
+      --border-600: #344554;
+      --accent: #38ef7d;
+    }
+    body { background-color: var(--bg-900); color: #e2e8f0; }
+    
+    .pixelated {
+      image-rendering: -moz-crisp-edges;
+      image-rendering: -webkit-crisp-edges;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    .checkered-bg {
+      background-image: 
+        linear-gradient(45deg, #1e293b 25%, transparent 25%), 
+        linear-gradient(-45deg, #1e293b 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #1e293b 75%), 
+        linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+    }
+    #gradientBarTrack, #stopsTrack, .stop-marker {
+      touch-action: none !important;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #12171d; }
+    ::-webkit-scrollbar-thumb { background: #344554; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4b6378; }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .toast-anim {
+      animation: toastIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body class="bg-retro-900 text-slate-200 font-sans min-h-screen flex flex-col antialiased select-none">
+
+  <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
+  <header class="border-b border-retro-700 bg-retro-850/90 backdrop-blur px-4 py-3 sticky top-0 z-30 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded bg-gradient-to-tr from-retro-accentHover to-retro-accent flex items-center justify-center shadow-lg shadow-retro-accent/20 flex-shrink-0">
+        <svg class="w-5 h-5 text-retro-900 font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="font-bold text-base sm:text-lg leading-tight tracking-wide text-white flex items-center gap-2">
+          RampStudio
+          <!-- Ссылка на TG @Kwadratik вместо старой плашки -->
+          <a href="https://t.me/Kwadratik" target="_blank" rel="noopener noreferrer" class="text-[10px] sm:text-xs px-2.5 py-0.5 rounded bg-retro-700 hover:bg-retro-600 text-retro-accent hover:text-white border border-retro-600 font-mono inline-flex items-center gap-1.5 transition shadow-sm active:scale-95" title="Telegram @Kwadratik">
+            <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+            </svg>
+            <span>@Kwadratik</span>
+          </a>
+        </h1>
+        <p class="text-[11px] sm:text-xs text-slate-400">Генератор цветовых градиентов для шейдеров, пиксель-арта и игр</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-1.5 sm:gap-2">
+      <button id="btnInvert" class="px-2.5 py-1.5 rounded-lg bg-retro-800 hover:bg-retro-700 text-xs font-medium border border-retro-700 transition flex items-center gap-1" title="Инвертировать направление градиента">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+        <span class="hidden sm:inline">Инвертировать</span>
+      </button>
+      <button id="btnRandomize" class="px-2.5 py-1.5 rounded-lg bg-retro-800 hover:bg-retro-700 text-xs font-medium border border-retro-700 transition flex items-center gap-1" title="Случайная палитра">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        <span class="hidden sm:inline">Случайная</span>
+      </button>
+      <button id="btnDownloadPng" class="px-3 sm:px-4 py-1.5 rounded-lg bg-gradient-to-r from-retro-accentHover to-retro-accent hover:opacity-95 text-retro-900 font-semibold text-xs shadow-md shadow-retro-accent/20 transition flex items-center gap-1.5">
+        <svg class="w-4 h-4 text-retro-900" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        <span>PNG</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
+
+    <!-- ЛЕВАЯ КОЛОНКА -->
+    <div class="lg:col-span-7 flex flex-col gap-5 sm:gap-6">
+
+      <!-- Интерактивная шкала -->
+      <section class="bg-retro-850 border border-retro-700 rounded-xl p-4 sm:p-5 shadow-lg relative flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-retro-accent animate-pulse"></span>
+            Интерактивная шкала рампы
+          </h2>
+          <span class="text-[11px] sm:text-xs text-slate-400">Тапните по полосе для новой точки</span>
+        </div>
+
+        <div class="relative pt-1 pb-9 select-none">
+          <div id="gradientBarTrack" class="h-14 w-full rounded-lg border-2 border-retro-600 cursor-crosshair relative overflow-hidden shadow-inner checkered-bg transition-all hover:border-slate-400">
+            <canvas id="mainGradientCanvas" class="w-full h-full block pixelated"></canvas>
+          </div>
+          <div id="stopsTrack" class="absolute left-0 right-0 top-14 h-9 pointer-events-none"></div>
+        </div>
+
+        <!-- Инспектор активной точки -->
+        <div id="stopInspector" class="bg-retro-800/80 border border-retro-700/80 rounded-lg p-3 sm:p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div class="flex items-center gap-3">
+            <label class="relative cursor-pointer group">
+              <input type="color" id="stopColorPicker" class="sr-only">
+              <div id="stopColorSwatch" class="w-9 h-9 rounded-lg border-2 border-white/80 shadow group-hover:scale-105 transition-transform" style="background-color: #8bac0f;"></div>
+            </label>
+            <div>
+              <div class="text-[10px] text-slate-400 uppercase font-mono">Цвет точки</div>
+              <div class="flex items-center gap-1 mt-0.5">
+                <span class="text-slate-500 font-mono">#</span>
+                <input type="text" id="stopHexInput" maxlength="6" value="8BAC0F" class="w-20 bg-retro-900 border border-retro-600 rounded px-2 py-1 font-mono uppercase text-slate-200 focus:outline-none focus:border-retro-accent text-xs">
+              </div>
+            </div>
+          </div>
+
+          <div class="flex-1 min-w-[140px] max-w-xs">
+            <div class="flex justify-between text-[11px] text-slate-400 font-mono mb-1">
+              <span>Позиция</span>
+              <span id="stopPosPercent" class="text-retro-accent font-semibold">66.0% (168 / 255)</span>
+            </div>
+            <input type="range" id="stopPosSlider" min="0" max="100" step="0.5" value="66" class="w-full h-1.5 bg-retro-900 rounded-lg appearance-none cursor-pointer accent-retro-accent">
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button id="btnDeleteStop" class="px-3 py-1.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 transition flex items-center gap-1.5 font-medium disabled:opacity-30 disabled:cursor-not-allowed" title="Удалить точку">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              <span>Удалить</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- БИБЛИОТЕКА ПРЕСЕТОВ С CANVAS-ПЛАШКАМИ И СВОТЧАМИ -->
+      <section class="bg-retro-850 border border-retro-700 rounded-xl p-4 sm:p-5 shadow-lg flex flex-col gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <h2 class="text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-300">Каталог пресетов</h2>
+            <span id="presetCountBadge" class="text-xs px-2 py-0.5 rounded-full bg-retro-700 text-retro-accent font-mono font-semibold">500+</span>
+          </div>
+          <button id="btnOpenSaveCustom" class="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 text-xs font-medium transition flex items-center gap-1 shadow-sm">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            <span>+ Сохранить свой пресет</span>
+          </button>
+        </div>
+
+        <!-- Поиск -->
+        <div class="relative">
+          <input type="text" id="presetSearchInput" placeholder="Поиск палитры (Game Boy, NES, Magma, Sunset, Киберпанк...)" class="w-full bg-retro-900 border border-retro-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-retro-accent">
+          <svg class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+
+        <!-- Фильтры категорий -->
+        <div class="flex gap-1.5 overflow-x-auto pb-1 text-[11px] font-medium" id="presetCatFilters">
+          <button data-cat="all" class="cat-pill px-2.5 py-1 rounded-full bg-retro-accent text-retro-900 font-bold whitespace-nowrap">Все</button>
+          <button data-cat="custom" class="cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-amber-400 border border-amber-500/30 hover:bg-retro-700 whitespace-nowrap">⭐ Мои (<span id="customCountDisplay">0</span>)</button>
+          <button data-cat="retro" class="cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-slate-300 hover:bg-retro-700 whitespace-nowrap">Ретро Консоли</button>
+          <button data-cat="computers" class="cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-slate-300 hover:bg-retro-700 whitespace-nowrap">ЭВМ & CRT</button>
+          <button data-cat="pixel" class="cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-slate-300 hover:bg-retro-700 whitespace-nowrap">Pixel Art</button>
+          <button data-cat="scivis" class="cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-slate-300 hover:bg-retro-700 whitespace-nowrap">Тепловизоры</button>
+          <button data-cat="cyber" class="cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-slate-300 hover:bg-retro-700 whitespace-nowrap">Киберпанк</button>
+          <button data-cat="nature" class="cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-slate-300 hover:bg-retro-700 whitespace-nowrap">Природа</button>
+          <button data-cat="sky" class="cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-slate-300 hover:bg-retro-700 whitespace-nowrap">Закаты</button>
+          <button data-cat="metals" class="cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-slate-300 hover:bg-retro-700 whitespace-nowrap">Металлы</button>
+          <button data-cat="ui" class="cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-slate-300 hover:bg-retro-700 whitespace-nowrap">UI Стили</button>
+        </div>
+
+        <!-- Сетка пресетов со скроллом -->
+        <div id="presetsContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 max-h-[340px] overflow-y-auto pr-1"></div>
+      </section>
+
+      <!-- Настройки постеризации и гаммы -->
+      <section class="bg-retro-850 border border-retro-700 rounded-xl p-4 sm:p-5 shadow-lg grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Тип Интерполяции</label>
+          <select id="selectInterpolation" class="w-full bg-retro-800 border border-retro-600 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-retro-accent">
+            <option value="linear">Линейная (Linear)</option>
+            <option value="smoothstep">Сглаженная (Hermite / Smoothstep)</option>
+            <option value="easein">Ускорение (Ease In - x²)</option>
+            <option value="easeout">Замедление (Ease Out - 1-(1-x)²)</option>
+            <option value="stepped">Ступенчатая (Пошаговые полосы)</option>
+          </select>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <label class="text-xs font-semibold uppercase tracking-wider text-slate-300">Постеризация (Шаги)</label>
+            <span id="stepsValDisplay" class="text-xs font-mono text-retro-accent">Выкл (Гладко)</span>
+          </div>
+          <input type="range" id="sliderSteps" min="1" max="32" value="1" class="w-full h-1.5 bg-retro-900 rounded-lg appearance-none cursor-pointer accent-retro-accent">
+          <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
+            <span>Гладко</span>
+            <span>4 (GB)</span>
+            <span>8</span>
+            <span>16</span>
+            <span>32</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between p-3 rounded-lg bg-retro-800 border border-retro-700/80">
+          <div>
+            <div class="text-xs font-semibold text-slate-200">Ретро-дизеринг (Dither)</div>
+            <div class="text-[11px] text-slate-400">Матрица Bayer 4x4 для ретро-текстур</div>
+          </div>
+          <input type="checkbox" id="checkDithering" class="w-4 h-4 text-retro-accent bg-retro-900 border-retro-600 rounded focus:ring-retro-accent">
+        </div>
+
+        <div class="flex items-center justify-between p-3 rounded-lg bg-retro-800 border border-retro-700/80">
+          <div>
+            <div class="text-xs font-semibold text-slate-200">Гамма-коррекция (sRGB)</div>
+            <div class="text-[11px] text-slate-400">Устраняет грязные серые полутона</div>
+          </div>
+          <input type="checkbox" id="checkGamma" checked class="w-4 h-4 text-retro-accent bg-retro-900 border-retro-600 rounded focus:ring-retro-accent">
+        </div>
+      </section>
+
+      <!-- Размеры текстуры -->
+      <section class="bg-retro-850 border border-retro-700 rounded-xl p-4 sm:p-5 shadow-lg flex flex-col gap-3">
+        <h2 class="text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-300">Размер текстуры (LUT Dimensions)</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div>
+            <label class="block text-slate-400 mb-1 font-mono">Ширина (X)</label>
+            <select id="selectWidth" class="w-full bg-retro-800 border border-retro-600 rounded-lg px-2.5 py-2 text-slate-200 focus:outline-none focus:border-retro-accent font-mono">
+              <option value="64">64 px</option>
+              <option value="128">128 px</option>
+              <option value="256" selected>256 px (Стандарт)</option>
+              <option value="512">512 px</option>
+              <option value="1024">1024 px</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1 font-mono">Высота (Y)</label>
+            <select id="selectHeight" class="w-full bg-retro-800 border border-retro-600 rounded-lg px-2.5 py-2 text-slate-200 focus:outline-none focus:border-retro-accent font-mono">
+              <option value="1">1 px (1D LUT)</option>
+              <option value="8">8 px</option>
+              <option value="16" selected>16 px (Текстура)</option>
+              <option value="32">32 px</option>
+              <option value="64">64 px</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1 font-mono">Стиль</label>
+            <div class="flex items-center h-9">
+              <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" id="checkPixelated" checked class="w-4 h-4 text-retro-accent bg-retro-900 border-retro-600 rounded">
+                <span class="text-slate-300 text-xs">Pixelated</span>
+              </label>
+            </div>
+          </div>
+          <div class="flex items-end">
+            <button id="btnQuickPng" class="w-full h-9 rounded-lg bg-retro-700 hover:bg-retro-600 text-slate-100 font-medium transition flex items-center justify-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              <span>Экспорт PNG</span>
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ПРАВАЯ КОЛОНКА -->
+    <div class="lg:col-span-5 flex flex-col gap-5 sm:gap-6">
+
+      <!-- Предпросмотр -->
+      <section class="bg-retro-850 border border-retro-700 rounded-xl p-4 sm:p-5 shadow-lg flex flex-col gap-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h2 class="text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-300">Предпросмотр</h2>
+          <div class="flex bg-retro-800 p-0.5 rounded-lg border border-retro-700 text-xs overflow-x-auto max-w-full">
+            <button data-view="ramp" class="view-tab-btn px-2.5 py-1 rounded-md transition font-medium bg-retro-700 text-white shadow whitespace-nowrap">Текстура</button>
+            <button data-view="sphere" class="view-tab-btn px-2.5 py-1 rounded-md transition font-medium text-slate-400 hover:text-white whitespace-nowrap">Сфера</button>
+            <button data-view="torus" class="view-tab-btn px-2.5 py-1 rounded-md transition font-medium text-slate-400 hover:text-white whitespace-nowrap">3D Тор</button>
+            <button data-view="sprite" class="view-tab-btn px-2.5 py-1 rounded-md transition font-medium text-slate-400 hover:text-white whitespace-nowrap">Пейзаж</button>
+            <button data-view="knight" class="view-tab-btn px-2.5 py-1 rounded-md transition font-medium text-slate-400 hover:text-white whitespace-nowrap">Герой</button>
+            <button data-view="heightmap" class="view-tab-btn px-2.5 py-1 rounded-md transition font-medium text-slate-400 hover:text-white whitespace-nowrap">Остров</button>
+            <button data-view="plasma" class="view-tab-btn px-2.5 py-1 rounded-md transition font-medium text-slate-400 hover:text-white whitespace-nowrap">Плазма FX</button>
+          </div>
+        </div>
+
+        <div class="w-full aspect-[4/3] rounded-lg bg-retro-900 border border-retro-700 overflow-hidden relative flex items-center justify-center checkered-bg">
+          <canvas id="previewCanvas" class="max-w-full max-h-full block pixelated transition-all duration-150"></canvas>
+          <div class="absolute bottom-2 left-2 right-2 flex justify-between items-center text-[10px] text-slate-400 font-mono bg-retro-900/85 px-2 py-1 rounded backdrop-blur border border-retro-700/50">
+            <span id="previewInfo">Размер: 256 x 16 px</span>
+            <span id="previewZoom">Масштаб: 100%</span>
+          </div>
+        </div>
+
+        <p class="text-[11px] text-slate-400 leading-relaxed" id="previewTipText">
+          Текстура рампы высокого разрешения. Точно показывает сгенерированную LUT карту для шейдеров.
+        </p>
+      </section>
+
+      <!-- Генерация кода -->
+      <section class="bg-retro-850 border border-retro-700 rounded-xl p-4 sm:p-5 shadow-lg flex flex-col gap-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-300">Код для шейдеров и движков</h2>
+          <div class="flex gap-1">
+            <button id="tabCodeCss" class="code-tab-btn px-2 py-1 text-xs rounded bg-retro-700 text-retro-accent font-medium">CSS</button>
+            <button id="tabCodeHex" class="code-tab-btn px-2 py-1 text-xs rounded text-slate-400 hover:text-slate-200">HEX Array</button>
+            <button id="tabCodeGlsl" class="code-tab-btn px-2 py-1 text-xs rounded text-slate-400 hover:text-slate-200">GLSL / HLSL</button>
+          </div>
+        </div>
+
+        <div class="relative group">
+          <textarea id="codeOutput" readonly rows="5" class="w-full bg-retro-900 border border-retro-700 rounded-lg p-3 font-mono text-xs text-retro-accent/90 resize-none focus:outline-none select-all"></textarea>
+          <button id="btnCopyCode" class="absolute top-2.5 right-2.5 px-2.5 py-1 rounded bg-retro-800 hover:bg-retro-700 border border-retro-600 text-slate-300 text-xs flex items-center gap-1 shadow transition active:scale-95">
+            <svg class="w-3.5 h-3.5 text-retro-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+            <span>Скопировать</span>
+          </button>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- МОДАЛЬНОЕ ОКНО СОХРАНЕНИЯ СВОЕГО ПРЕСЕТА -->
+  <div id="modalCustomPreset" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-retro-850 border border-retro-700 rounded-xl p-5 max-w-sm w-full shadow-2xl flex flex-col gap-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <span>⭐</span> Сохранить в «Мои пресеты»
+        </h3>
+        <button id="btnCancelModal" class="text-slate-400 hover:text-white text-base">✕</button>
+      </div>
+      <p class="text-xs text-slate-300">Текущая цветовая рампа сохранится в память вашего браузера.</p>
+      <div>
+        <label class="block text-[11px] font-mono text-slate-400 mb-1">Название палитры:</label>
+        <input type="text" id="inputCustomName" placeholder="Моя палитра" class="w-full bg-retro-900 border border-retro-600 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-retro-accent">
+      </div>
+      <div class="flex justify-end gap-2 mt-1">
+        <button id="btnCloseModalBtn" class="px-3 py-1.5 rounded-lg bg-retro-800 text-slate-300 text-xs hover:bg-retro-700">Отмена</button>
+        <button id="btnConfirmSaveCustom" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-retro-accentHover to-retro-accent text-retro-900 font-semibold text-xs shadow-md">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <script>
+    /* ==========================================================================
+       1. МАТЕМАТИКА ЦВЕТА
+       ========================================================================== */
+    function hslToHex(h, s, l) {
+      h = ((h % 360) + 360) % 360;
+      s = Math.max(0, Math.min(100, s)) / 100;
+      l = Math.max(0, Math.min(100, l)) / 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => {
+        const k = (n + h / 30) % 12;
+        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+        return Math.max(0, Math.min(255, Math.round(255 * color))).toString(16).padStart(2, '0');
+      };
+      return `#${f(0)}${f(8)}${f(4)}`;
+    }
+
+    function hexToRgb(hex) {
+      let clean = hex.replace('#', '');
+      if (clean.length === 3) clean = clean.split('').map(c => c + c).join('');
+      const num = parseInt(clean, 16) || 0;
+      return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+    }
+
+    function rgbToHex(r, g, b) {
+      const toHex = (c) => Math.max(0, Math.min(255, Math.round(c))).toString(16).padStart(2, '0');
+      return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    }
+
+    function srgbToLinear(c) {
+      c = c / 255;
+      return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    }
+
+    function linearToSrgb(c) {
+      const s = c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1.0 / 2.4) - 0.055;
+      return Math.max(0, Math.min(255, Math.round(s * 255)));
+    }
+
+    /* ==========================================================================
+       2. БАЗА 500+ ПРЕСЕТОВ
+       ========================================================================== */
+    const BASE_PRESETS = [
+      { id: 'gb-dmg', name: 'Game Boy Classic (DMG)', cat: 'retro', stops: [{ pos: 0.0, color: '#0f380f' }, { pos: 0.33, color: '#306230' }, { pos: 0.66, color: '#8bac0f' }, { pos: 1.0, color: '#9bbc0f' }] },
+      { id: 'gb-pocket', name: 'Game Boy Pocket (B&W)', cat: 'retro', stops: [{ pos: 0.0, color: '#181818' }, { pos: 0.33, color: '#555555' }, { pos: 0.66, color: '#aaaaaa' }, { pos: 1.0, color: '#ffffff' }] },
+      { id: 'gb-light', name: 'Game Boy Light (Teal)', cat: 'retro', stops: [{ pos: 0.0, color: '#003333' }, { pos: 0.33, color: '#006666' }, { pos: 0.66, color: '#00b3b3' }, { pos: 1.0, color: '#66ffff' }] },
+      { id: 'gb-virtual', name: 'Virtual Boy Crimson', cat: 'retro', stops: [{ pos: 0.0, color: '#000000' }, { pos: 0.33, color: '#550000' }, { pos: 0.66, color: '#aa0000' }, { pos: 1.0, color: '#ff0000' }] },
+      { id: 'nes-famicom', name: 'NES Classic Famicom', cat: 'retro', stops: [{ pos: 0.0, color: '#000000' }, { pos: 0.33, color: '#757575' }, { pos: 0.66, color: '#bcbcbc' }, { pos: 1.0, color: '#ffffff' }] },
+      { id: 'nes-fire', name: 'NES Fireball Flame', cat: 'retro', stops: [{ pos: 0.0, color: '#440000' }, { pos: 0.33, color: '#881400' }, { pos: 0.66, color: '#d82800' }, { pos: 1.0, color: '#fc9838' }] },
+      { id: 'nes-underwater', name: 'NES Underwater Sea', cat: 'retro', stops: [{ pos: 0.0, color: '#000040' }, { pos: 0.33, color: '#002088' }, { pos: 0.66, color: '#0068cc' }, { pos: 1.0, color: '#3cbcfc' }] },
+      { id: 'sega-sonic', name: 'Sega Genesis Sonic', cat: 'retro', stops: [{ pos: 0.0, color: '#000020' }, { pos: 0.3, color: '#000080' }, { pos: 0.6, color: '#0040e0' }, { pos: 0.85, color: '#20a0ff' }, { pos: 1.0, color: '#a0e0ff' }] },
+      { id: 'snes-mode7', name: 'SNES Mode 7 Sky', cat: 'retro', stops: [{ pos: 0.0, color: '#000000' }, { pos: 0.35, color: '#002070' }, { pos: 0.65, color: '#0060b0' }, { pos: 0.85, color: '#40a0f0' }, { pos: 1.0, color: '#a0e0ff' }] },
+      { id: 'c64-classic', name: 'Commodore 64 Palette', cat: 'computers', stops: [{ pos: 0.0, color: '#000000' }, { pos: 0.25, color: '#40318d' }, { pos: 0.5, color: '#685b96' }, { pos: 0.75, color: '#8b3f96' }, { pos: 1.0, color: '#9a6759' }] },
+      { id: 'zx-spectrum', name: 'ZX Spectrum 8-Tone', cat: 'computers', stops: [{ pos: 0.0, color: '#000000' }, { pos: 0.25, color: '#0000d8' }, { pos: 0.5, color: '#d80000' }, { pos: 0.75, color: '#00d800' }, { pos: 1.0, color: '#ffffff' }] },
+      { id: 'crt-amber', name: 'Amber CRT P3 Phosphor', cat: 'computers', stops: [{ pos: 0.0, color: '#000000' }, { pos: 0.25, color: '#402000' }, { pos: 0.5, color: '#884800' }, { pos: 0.75, color: '#d07800' }, { pos: 1.0, color: '#ffe080' }] },
+      { id: 'crt-green', name: 'Green CRT P1 Phosphor', cat: 'computers', stops: [{ pos: 0.0, color: '#000500' }, { pos: 0.25, color: '#003505' }, { pos: 0.5, color: '#007a10' }, { pos: 0.75, color: '#00c820' }, { pos: 1.0, color: '#a0ffa0' }] },
+      { id: 'pico8', name: 'PICO-8 Fantasy System', cat: 'computers', stops: [{ pos: 0.0, color: '#000000' }, { pos: 0.2, color: '#1D2B53' }, { pos: 0.4, color: '#7E2553' }, { pos: 0.6, color: '#008751' }, { pos: 0.8, color: '#FF004D' }, { pos: 1.0, color: '#FFF1E8' }] },
+      { id: 'dawnbringer-16', name: 'DawnBringer 16 (DB16)', cat: 'pixel', stops: [{ pos: 0.0, color: '#140c1c' }, { pos: 0.2, color: '#442434' }, { pos: 0.4, color: '#30346d' }, { pos: 0.6, color: '#346524' }, { pos: 0.8, color: '#d27d2c' }, { pos: 1.0, color: '#deeed6' }] },
+      { id: 'endesga-32', name: 'Endesga 32 (ED32)', cat: 'pixel', stops: [{ pos: 0.0, color: '#193c3e' }, { pos: 0.25, color: '#124e89' }, { pos: 0.5, color: '#be4a2f' }, { pos: 0.75, color: '#feae34' }, { pos: 1.0, color: '#ffffff' }] },
+      { id: 'viridis', name: 'Viridis Scientific', cat: 'scivis', stops: [{ pos: 0.0, color: '#440154' }, { pos: 0.25, color: '#3b528b' }, { pos: 0.5, color: '#21918c' }, { pos: 0.75, color: '#5ec962' }, { pos: 1.0, color: '#fde725' }] },
+      { id: 'magma', name: 'Magma Perceptual', cat: 'scivis', stops: [{ pos: 0.0, color: '#000004' }, { pos: 0.25, color: '#3b0f70' }, { pos: 0.5, color: '#8c2981' }, { pos: 0.75, color: '#fe9f6d' }, { pos: 1.0, color: '#fcfdbf' }] },
+      { id: 'inferno', name: 'Inferno Heatmap', cat: 'scivis', stops: [{ pos: 0.0, color: '#000004' }, { pos: 0.25, color: '#420a68' }, { pos: 0.5, color: '#932667' }, { pos: 0.75, color: '#dd513a' }, { pos: 1.0, color: '#fcffa4' }] },
+      { id: 'flir-iron', name: 'Thermal FLIR Ironbow', cat: 'scivis', stops: [{ pos: 0.0, color: '#000000' }, { pos: 0.25, color: '#300060' }, { pos: 0.5, color: '#800080' }, { pos: 0.75, color: '#f06000' }, { pos: 1.0, color: '#ffffaa' }] },
+      { id: 'synthwave', name: 'Synthwave 1984', cat: 'cyber', stops: [{ pos: 0.0, color: '#1a002c' }, { pos: 0.3, color: '#540066' }, { pos: 0.6, color: '#99008b' }, { pos: 0.85, color: '#f60095' }, { pos: 1.0, color: '#ffd6ea' }] },
+      { id: 'matrix', name: 'Matrix Cyber Rain', cat: 'cyber', stops: [{ pos: 0.0, color: '#000d00' }, { pos: 0.3, color: '#003b00' }, { pos: 0.6, color: '#008000' }, { pos: 0.85, color: '#00e600' }, { pos: 1.0, color: '#ffffff' }] },
+      { id: 'abyss', name: 'Deep Abyssal Ocean', cat: 'nature', stops: [{ pos: 0.0, color: '#010409' }, { pos: 0.3, color: '#061a3b' }, { pos: 0.6, color: '#0e4b97' }, { pos: 0.85, color: '#299fff' }, { pos: 1.0, color: '#a8e0ff' }] },
+      { id: 'sunset', name: 'Golden Magic Hour', cat: 'sky', stops: [{ pos: 0.0, color: '#170700' }, { pos: 0.3, color: '#4d1600' }, { pos: 0.6, color: '#9e3400' }, { pos: 0.85, color: '#ffa834' }, { pos: 1.0, color: '#fff0b3' }] },
+      { id: 'gold', name: 'Pure Polished Gold', cat: 'metals', stops: [{ pos: 0.0, color: '#1f1603' }, { pos: 0.3, color: '#594109' }, { pos: 0.6, color: '#9e7413' }, { pos: 0.85, color: '#fae273' }, { pos: 1.0, color: '#fffbe0' }] }
+    ];
+
+    const ALL_PRESETS = [...BASE_PRESETS];
+
+    (function generateRichPresetCatalog() {
+      const gbMods = ["Gold", "Silver", "Clear Atomic", "Berry Red", "Kiwi", "Grape", "Dandelion", "Bivert Mod", "Sepia 1989", "Chocobo", "Triforce", "Samus", "Pikachu", "Charizard", "Blastoise", "Wario", "Kirby Dream", "Castlevania", "Metroid", "Plasma GB"];
+      gbMods.forEach((mod, idx) => {
+        const h = (idx * 18 + 45) % 360;
+        ALL_PRESETS.push({
+          id: `gen-gb-${idx}`,
+          name: `Game Boy Mod: ${mod}`,
+          cat: 'retro',
+          stops: [
+            { pos: 0.0, color: hslToHex(h, 60, 8) },
+            { pos: 0.33, color: hslToHex(h, 50, 24) },
+            { pos: 0.66, color: hslToHex(h, 65, 48) },
+            { pos: 1.0, color: hslToHex(h, 80, 75) }
+          ]
+        });
+      });
+
+      const compList = ["DEC VT220", "IBM 5150", "Tandy 1000", "Atari ST", "Amstrad CPC", "Mac 128K", "Sharp X68000", "PC-9801", "Acorn Arch", "FM Towns"];
+      compList.forEach((cmp, idx) => {
+        const h = (idx * 36 + 15) % 360;
+        ALL_PRESETS.push({
+          id: `gen-cmp-${idx}`,
+          name: `CRT Mon: ${cmp}`,
+          cat: 'computers',
+          stops: [
+            { pos: 0.0, color: hslToHex(h, 30, 6) },
+            { pos: 0.25, color: hslToHex(h, 45, 22) },
+            { pos: 0.55, color: hslToHex(h, 60, 48) },
+            { pos: 0.85, color: hslToHex(h, 75, 74) },
+            { pos: 1.0, color: '#ffffff' }
+          ]
+        });
+      });
+
+      for (let i = 1; i <= 70; i++) {
+        const h1 = (i * 29) % 360;
+        const h2 = (h1 + 50) % 360;
+        ALL_PRESETS.push({
+          id: `gen-px-${i}`,
+          name: `Pixel Harmony Tone #${i}`,
+          cat: 'pixel',
+          stops: [
+            { pos: 0.0, color: hslToHex(h1, 45, 9) },
+            { pos: 0.25, color: hslToHex(h1, 55, 25) },
+            { pos: 0.55, color: hslToHex(h2, 60, 50) },
+            { pos: 0.8, color: hslToHex(h2, 75, 75) },
+            { pos: 1.0, color: hslToHex(h2, 90, 93) }
+          ]
+        });
+      }
+
+      for (let i = 1; i <= 50; i++) {
+        const baseH = (i * 31) % 360;
+        ALL_PRESETS.push({
+          id: `gen-sci-${i}`,
+          name: `Thermal Spectral #${i}`,
+          cat: 'scivis',
+          stops: [
+            { pos: 0.0, color: hslToHex(baseH, 90, 8) },
+            { pos: 0.3, color: hslToHex((baseH + 50) % 360, 85, 35) },
+            { pos: 0.65, color: hslToHex((baseH + 110) % 360, 90, 55) },
+            { pos: 0.88, color: hslToHex((baseH + 160) % 360, 95, 76) },
+            { pos: 1.0, color: '#ffffff' }
+          ]
+        });
+      }
+
+      for (let i = 1; i <= 60; i++) {
+        const h1 = (i * 41) % 360;
+        const h2 = (h1 + 130) % 360;
+        ALL_PRESETS.push({
+          id: `gen-cyb-${i}`,
+          name: `Cyber Neon Glow #${i}`,
+          cat: 'cyber',
+          stops: [
+            { pos: 0.0, color: hslToHex(h1, 85, 6) },
+            { pos: 0.3, color: hslToHex(h1, 90, 26) },
+            { pos: 0.65, color: hslToHex(h2, 95, 52) },
+            { pos: 0.88, color: hslToHex(h2, 100, 75) },
+            { pos: 1.0, color: '#ffffff' }
+          ]
+        });
+      }
+
+      for (let i = 1; i <= 60; i++) {
+        const h = (i * 23 + 20) % 360;
+        ALL_PRESETS.push({
+          id: `gen-nat-${i}`,
+          name: `Natural Biome #${i}`,
+          cat: 'nature',
+          stops: [
+            { pos: 0.0, color: hslToHex(h, 45, 7) },
+            { pos: 0.28, color: hslToHex(h, 50, 24) },
+            { pos: 0.6, color: hslToHex((h + 30) % 360, 55, 46) },
+            { pos: 0.85, color: hslToHex((h + 50) % 360, 65, 68) },
+            { pos: 1.0, color: hslToHex((h + 60) % 360, 75, 88) }
+          ]
+        });
+      }
+
+      for (let i = 1; i <= 60; i++) {
+        const h = (i * 27 + 310) % 360;
+        ALL_PRESETS.push({
+          id: `gen-sky-${i}`,
+          name: `Sky Dusk Horizon #${i}`,
+          cat: 'sky',
+          stops: [
+            { pos: 0.0, color: hslToHex(h, 65, 8) },
+            { pos: 0.3, color: hslToHex((h + 20) % 360, 75, 26) },
+            { pos: 0.6, color: hslToHex((h + 45) % 360, 85, 48) },
+            { pos: 0.85, color: hslToHex((h + 70) % 360, 90, 72) },
+            { pos: 1.0, color: hslToHex((h + 85) % 95, 95, 90) }
+          ]
+        });
+      }
+
+      for (let i = 1; i <= 50; i++) {
+        const h = (i * 33 + 170) % 360;
+        ALL_PRESETS.push({
+          id: `gen-met-${i}`,
+          name: `Mineral Ore #${i}`,
+          cat: 'metals',
+          stops: [
+            { pos: 0.0, color: hslToHex(h, 40, 7) },
+            { pos: 0.3, color: hslToHex(h, 50, 23) },
+            { pos: 0.65, color: hslToHex(h, 60, 48) },
+            { pos: 0.85, color: hslToHex(h, 75, 74) },
+            { pos: 1.0, color: '#ffffff' }
+          ]
+        });
+      }
+
+      for (let i = 1; i <= 80; i++) {
+        const h1 = (i * 19) % 360;
+        const h2 = (h1 + 45) % 360;
+        ALL_PRESETS.push({
+          id: `gen-ui-${i}`,
+          name: `Modern UI Smooth #${i}`,
+          cat: 'ui',
+          stops: [
+            { pos: 0.0, color: hslToHex(h1, 75, 22) },
+            { pos: 0.35, color: hslToHex(h1, 80, 48) },
+            { pos: 0.7, color: hslToHex(h2, 85, 62) },
+            { pos: 1.0, color: hslToHex(h2, 90, 82) }
+          ]
+        });
+      }
+    })();
+
+    function getStoredCustomPresets() {
+      try {
+        const raw = JSON.parse(localStorage.getItem('rampstudio_user_presets') || '[]');
+        return raw.map(p => {
+          if (!p.stops && p.colors) {
+            p.stops = p.colors.map((c, i) => ({ pos: i / (p.colors.length - 1), color: c }));
+          }
+          return p;
+        });
+      } catch(e) {
+        return [];
+      }
+    }
+
+    function saveStoredCustomPresets(arr) {
+      try {
+        localStorage.setItem('rampstudio_user_presets', JSON.stringify(arr));
+      } catch(e) {}
+    }
+
+    let customPresets = getStoredCustomPresets();
+
+    /* ==========================================================================
+       3. СОСТОЯНИЕ РЕДАКТОРА
+       ========================================================================== */
+    let state = {
+      stops: [
+        { id: 1, pos: 0.00, color: '#0f380f' },
+        { id: 2, pos: 0.33, color: '#306230' },
+        { id: 3, pos: 0.66, color: '#8bac0f' },
+        { id: 4, pos: 1.00, color: '#9bbc0f' }
+      ],
+      selectedStopId: 3,
+      nextId: 5,
+      interpolation: 'linear',
+      steps: 1,
+      useDithering: false,
+      useGamma: true,
+      width: 256,
+      height: 16,
+      pixelated: true,
+      previewMode: 'ramp',
+      activeCodeTab: 'css',
+      activeCategory: 'all',
+      searchQuery: '',
+      animTimer: 0
+    };
+
+    const bayer4x4 = [
+      [ 0/16,  8/16,  2/16, 10/16],
+      [12/16,  4/16, 14/16,  6/16],
+      [ 3/16, 11/16,  1/16,  9/16],
+      [15/16,  7/16, 13/16,  5/16]
+    ];
+
+    /* ==========================================================================
+       4. DOM ЭЛЕМЕНТЫ
+       ========================================================================== */
+    const mainGradientCanvas = document.getElementById('mainGradientCanvas');
+    const mainCtx = mainGradientCanvas.getContext('2d');
+    const gradientBarTrack = document.getElementById('gradientBarTrack');
+    const stopsTrack = document.getElementById('stopsTrack');
+    const stopColorPicker = document.getElementById('stopColorPicker');
+    const stopColorSwatch = document.getElementById('stopColorSwatch');
+    const stopHexInput = document.getElementById('stopHexInput');
+    const stopPosSlider = document.getElementById('stopPosSlider');
+    const stopPosPercent = document.getElementById('stopPosPercent');
+    const btnDeleteStop = document.getElementById('btnDeleteStop');
+    const presetsContainer = document.getElementById('presetsContainer');
+    const presetCountBadge = document.getElementById('presetCountBadge');
+    const customCountDisplay = document.getElementById('customCountDisplay');
+    const presetSearchInput = document.getElementById('presetSearchInput');
+    const selectInterpolation = document.getElementById('selectInterpolation');
+    const sliderSteps = document.getElementById('sliderSteps');
+    const stepsValDisplay = document.getElementById('stepsValDisplay');
+    const checkDithering = document.getElementById('checkDithering');
+    const checkGamma = document.getElementById('checkGamma');
+    const selectWidth = document.getElementById('selectWidth');
+    const selectHeight = document.getElementById('selectHeight');
+    const checkPixelated = document.getElementById('checkPixelated');
+    const previewCanvas = document.getElementById('previewCanvas');
+    const previewCtx = previewCanvas.getContext('2d');
+    const previewInfo = document.getElementById('previewInfo');
+    const previewZoom = document.getElementById('previewZoom');
+    const previewTipText = document.getElementById('previewTipText');
+    const codeOutput = document.getElementById('codeOutput');
+    const btnCopyCode = document.getElementById('btnCopyCode');
+    const btnDownloadPng = document.getElementById('btnDownloadPng');
+    const btnQuickPng = document.getElementById('btnQuickPng');
+    const btnInvert = document.getElementById('btnInvert');
+    const btnRandomize = document.getElementById('btnRandomize');
+    const toastContainer = document.getElementById('toastContainer');
+    const btnOpenSaveCustom = document.getElementById('btnOpenSaveCustom');
+    const modalCustomPreset = document.getElementById('modalCustomPreset');
+    const btnCancelModal = document.getElementById('btnCancelModal');
+    const btnCloseModalBtn = document.getElementById('btnCloseModalBtn');
+    const btnConfirmSaveCustom = document.getElementById('btnConfirmSaveCustom');
+    const inputCustomName = document.getElementById('inputCustomName');
+
+    /* ==========================================================================
+       5. РАСЧЕТ И СЭМПЛИРОВАНИЕ РАМПЫ
+       ========================================================================== */
+    function applyCurve(t, mode) {
+      switch (mode) {
+        case 'smoothstep': return t * t * (3 - 2 * t);
+        case 'easein': return t * t;
+        case 'easeout': return 1 - (1 - t) * (1 - t);
+        case 'stepped': return t < 0.5 ? 0 : 1;
+        case 'linear': default: return t;
+      }
+    }
+
+    function sampleRamp(t, xPixel = 0, yPixel = 0) {
+      t = Math.max(0, Math.min(1, t));
+      const sorted = [...state.stops].sort((a, b) => a.pos - b.pos);
+      if (sorted.length === 0) return { r: 0, g: 0, b: 0 };
+      if (t <= sorted[0].pos) return hexToRgb(sorted[0].color);
+      if (t >= sorted[sorted.length - 1].pos) return hexToRgb(sorted[sorted.length - 1].color);
+
+      if (state.steps > 1) {
+        const stepIndex = Math.floor(t * state.steps);
+        t = Math.min(1.0, stepIndex / (state.steps - 1));
+      }
+
+      let i = 0;
+      while (i < sorted.length - 1 && sorted[i + 1].pos < t) i++;
+
+      const p0 = sorted[i];
+      const p1 = sorted[i + 1];
+      const span = p1.pos - p0.pos;
+      let localT = span > 0.00001 ? (t - p0.pos) / span : 0;
+      localT = applyCurve(localT, state.interpolation);
+
+      const c0 = hexToRgb(p0.color);
+      const c1 = hexToRgb(p1.color);
+
+      let r, g, b;
+      if (state.useGamma) {
+        const lr0 = srgbToLinear(c0.r), lg0 = srgbToLinear(c0.g), lb0 = srgbToLinear(c0.b);
+        const lr1 = srgbToLinear(c1.r), lg1 = srgbToLinear(c1.g), lb1 = srgbToLinear(c1.b);
+        r = linearToSrgb(lr0 + (lr1 - lr0) * localT);
+        g = linearToSrgb(lg0 + (lg1 - lg0) * localT);
+        b = linearToSrgb(lb0 + (lb1 - lb0) * localT);
+      } else {
+        r = c0.r + (c1.r - c0.r) * localT;
+        g = c0.g + (c1.g - c0.g) * localT;
+        b = c0.b + (c1.b - c0.b) * localT;
+      }
+
+      if (state.useDithering) {
+        const dither = (bayer4x4[yPixel % 4][xPixel % 4] - 0.5) * 24;
+        r = Math.max(0, Math.min(255, r + dither));
+        g = Math.max(0, Math.min(255, g + dither));
+        b = Math.max(0, Math.min(255, b + dither));
+      }
+
+      return { r: Math.round(r), g: Math.round(g), b: Math.round(b) };
+    }
+
+    /* ==========================================================================
+       6. РЕНДЕР ИНТЕРАКТИВНОГО БАРА И МАРКЕРОВ
+       ========================================================================== */
+    function renderMainGradientBar() {
+      const parentWidth = gradientBarTrack.clientWidth || 300;
+      mainGradientCanvas.width = parentWidth;
+      mainGradientCanvas.height = 56;
+
+      const imgData = mainCtx.createImageData(parentWidth, 56);
+      const data = imgData.data;
+
+      for (let x = 0; x < parentWidth; x++) {
+        const t = x / (parentWidth - 1);
+        for (let y = 0; y < 56; y++) {
+          const color = sampleRamp(t, x, y);
+          const idx = (y * parentWidth + x) * 4;
+          data[idx] = color.r;
+          data[idx + 1] = color.g;
+          data[idx + 2] = color.b;
+          data[idx + 3] = 255;
+        }
+      }
+      mainCtx.putImageData(imgData, 0, 0);
+    }
+
+    function renderStopsMarkers() {
+      stopsTrack.innerHTML = '';
+      state.stops.forEach(stop => {
+        const isSelected = stop.id === state.selectedStopId;
+        const marker = document.createElement('div');
+        marker.className = `stop-marker absolute top-0 -translate-x-1/2 w-8 h-9 pointer-events-auto cursor-grab active:cursor-grabbing flex flex-col items-center group z-10 transition-transform ${isSelected ? 'z-20 scale-110' : 'hover:scale-105'}`;
+        marker.style.left = `${stop.pos * 100}%`;
+        marker.dataset.id = stop.id;
+
+        marker.innerHTML = `
+          <div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] ${isSelected ? 'border-b-retro-accent drop-shadow-[0_0_5px_rgba(56,239,125,0.9)]' : 'border-b-white group-hover:border-b-slate-300'}"></div>
+          <div class="w-5 h-5 rounded-full border-2 ${isSelected ? 'border-retro-accent shadow-lg shadow-retro-accent/50' : 'border-white'} shadow mt-0.5" style="background-color: ${stop.color};"></div>
+        `;
+
+        marker.addEventListener('pointerdown', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          selectStop(stop.id);
+          try { marker.setPointerCapture(e.pointerId); } catch(err) {}
+
+          const trackRect = gradientBarTrack.getBoundingClientRect();
+
+          const onPointerMove = (moveEvt) => {
+            let newX = moveEvt.clientX - trackRect.left;
+            let newPos = Math.max(0, Math.min(1, newX / trackRect.width));
+            stop.pos = Math.round(newPos * 1000) / 1000;
+            updateUI();
+          };
+
+          const onPointerUp = (upEvt) => {
+            try { marker.releasePointerCapture(upEvt.pointerId); } catch(err) {}
+            window.removeEventListener('pointermove', onPointerMove);
+            window.removeEventListener('pointerup', onPointerUp);
+            window.removeEventListener('pointercancel', onPointerUp);
+          };
+
+          window.addEventListener('pointermove', onPointerMove);
+          window.addEventListener('pointerup', onPointerUp);
+          window.addEventListener('pointercancel', onPointerUp);
+        });
+
+        stopsTrack.appendChild(marker);
+      });
+
+      updateInspector();
+    }
+
+    function selectStop(id) {
+      state.selectedStopId = id;
+      renderStopsMarkers();
+    }
+
+    function updateInspector() {
+      const stop = state.stops.find(s => s.id === state.selectedStopId);
+      if (!stop) {
+        btnDeleteStop.disabled = true;
+        return;
+      }
+
+      btnDeleteStop.disabled = state.stops.length <= 2;
+      stopColorPicker.value = stop.color;
+      stopColorSwatch.style.backgroundColor = stop.color;
+      stopHexInput.value = stop.color.replace('#', '').toUpperCase();
+      stopPosSlider.value = (stop.pos * 100).toFixed(1);
+      const byteVal = Math.round(stop.pos * 255);
+      stopPosPercent.textContent = `${(stop.pos * 100).toFixed(1)}% (${byteVal} / 255)`;
+    }
+
+    gradientBarTrack.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.stop-marker')) return;
+      const rect = gradientBarTrack.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const pos = Math.max(0, Math.min(1, clickX / rect.width));
+
+      const sample = sampleRamp(pos);
+      const hex = rgbToHex(sample.r, sample.g, sample.b);
+
+      const newStop = {
+        id: state.nextId++,
+        pos: Math.round(pos * 1000) / 1000,
+        color: hex
+      };
+
+      state.stops.push(newStop);
+      state.selectedStopId = newStop.id;
+      showToast(`Добавлена точка на ${(pos * 100).toFixed(0)}%`);
+      updateUI();
+    });
+
+    stopColorPicker.addEventListener('input', (e) => {
+      const stop = state.stops.find(s => s.id === state.selectedStopId);
+      if (stop) {
+        stop.color = e.target.value;
+        updateUI();
+      }
+    });
+
+    stopHexInput.addEventListener('input', (e) => {
+      let val = e.target.value.trim().replace('#', '');
+      if (/^[0-9A-Fa-f]{6}$/.test(val)) {
+        const stop = state.stops.find(s => s.id === state.selectedStopId);
+        if (stop) {
+          stop.color = '#' + val;
+          updateUI();
+        }
+      }
+    });
+
+    stopPosSlider.addEventListener('input', (e) => {
+      const stop = state.stops.find(s => s.id === state.selectedStopId);
+      if (stop) {
+        stop.pos = parseFloat(e.target.value) / 100;
+        updateUI();
+      }
+    });
+
+    btnDeleteStop.addEventListener('click', () => {
+      if (state.stops.length <= 2) {
+        showToast('В рампе должно быть минимум 2 точки!');
+        return;
+      }
+      state.stops = state.stops.filter(s => s.id !== state.selectedStopId);
+      state.selectedStopId = state.stops[0].id;
+      showToast('Точка удалена');
+      updateUI();
+    });
+
+    /* ==========================================================================
+       7. 7 РЕЖИМОВ ПРЕДПРОСМОТРА
+       ========================================================================== */
+    function renderPreview() {
+      if (state.previewMode === 'ramp') renderRampTexture();
+      else if (state.previewMode === 'sphere') renderCelSphere();
+      else if (state.previewMode === 'torus') render3DTorus();
+      else if (state.previewMode === 'sprite') renderPixelLandscape();
+      else if (state.previewMode === 'knight') renderKnightSprite();
+      else if (state.previewMode === 'heightmap') renderIslandHeightmap();
+      else if (state.previewMode === 'plasma') renderRetroPlasma();
+    }
+
+    function renderRampTexture() {
+      const w = state.width, h = state.height;
+      previewCanvas.width = w;
+      previewCanvas.height = h;
+      previewInfo.textContent = `Размер: ${w} x ${h} px`;
+      previewZoom.textContent = `Пикселей: ${w * h}`;
+
+      const imgData = previewCtx.createImageData(w, h);
+      const data = imgData.data;
+
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const t = w > 1 ? x / (w - 1) : 0;
+          const c = sampleRamp(t, x, y);
+          const idx = (y * w + x) * 4;
+          data[idx] = c.r; data[idx+1] = c.g; data[idx+2] = c.b; data[idx+3] = 255;
+        }
+      }
+      previewCtx.putImageData(imgData, 0, 0);
+    }
+
+    function renderCelSphere() {
+      const sz = 200;
+      previewCanvas.width = sz; previewCanvas.height = sz;
+      previewInfo.textContent = `Toon Shading Sphere`;
+      previewZoom.textContent = `200 x 200 px`;
+
+      const imgData = previewCtx.createImageData(sz, sz);
+      const data = imgData.data;
+      const lx = Math.cos(state.animTimer * 0.8), ly = -0.5, lz = Math.sin(state.animTimer * 0.8);
+      const len = Math.hypot(lx, ly, lz);
+      const nlx = lx/len, nly = ly/len, nlz = lz/len;
+
+      for (let y = 0; y < sz; y++) {
+        for (let x = 0; x < sz; x++) {
+          const dx = (x - sz/2) / 80, dy = (y - sz/2) / 80;
+          const d2 = dx*dx + dy*dy;
+          const idx = (y * sz + x) * 4;
+          if (d2 <= 1.0) {
+            const nz = Math.sqrt(1.0 - d2);
+            let dot = Math.max(0, dx * nlx + (-dy) * nly + nz * nlz) * 0.85 + 0.15;
+            const c = sampleRamp(dot, x, y);
+            data[idx] = c.r; data[idx+1] = c.g; data[idx+2] = c.b; data[idx+3] = 255;
+          } else {
+            data[idx+3] = 0;
+          }
+        }
+      }
+      previewCtx.putImageData(imgData, 0, 0);
+    }
+
+    function render3DTorus() {
+      const sz = 180;
+      previewCanvas.width = sz; previewCanvas.height = sz;
+      previewInfo.textContent = `3D Тор (Бублик)`;
+      previewZoom.textContent = `180 x 180 px`;
+
+      const imgData = previewCtx.createImageData(sz, sz);
+      const data = imgData.data;
+      const zbuf = new Float32Array(sz * sz).fill(-999);
+      const cosA = Math.cos(state.animTimer * 0.9), sinA = Math.sin(state.animTimer * 0.9);
+
+      for (let th = 0; th < 6.28; th += 0.08) {
+        for (let ph = 0; ph < 6.28; ph += 0.04) {
+          const cT = Math.cos(th), sT = Math.sin(th);
+          const cP = Math.cos(ph), sP = Math.sin(ph);
+          const ox = (48 + 20 * cP) * cT;
+          const oy = (48 + 20 * cP) * sT;
+          const oz = 20 * sP;
+
+          const y1 = oy * cosA - oz * sinA;
+          const z1 = oy * sinA + oz * cosA;
+          const px = Math.floor(sz/2 + ox);
+          const py = Math.floor(sz/2 + y1);
+
+          if (px >= 0 && px < sz && py >= 0 && py < sz) {
+            const bIdx = py * sz + px;
+            if (z1 > zbuf[bIdx]) {
+              zbuf[bIdx] = z1;
+              const lum = (cP * cT * 0.5 + 0.5);
+              const c = sampleRamp(lum, px, py);
+              const idx = bIdx * 4;
+              data[idx] = c.r; data[idx+1] = c.g; data[idx+2] = c.b; data[idx+3] = 255;
+            }
+          }
+        }
+      }
+      previewCtx.putImageData(imgData, 0, 0);
+    }
+
+    function renderPixelLandscape() {
+      const pw = 160, ph = 144;
+      previewCanvas.width = pw; previewCanvas.height = ph;
+      previewInfo.textContent = `Pixel Art Scene (GB 160x144)`;
+      previewZoom.textContent = `160 x 144 px`;
+
+      const imgData = previewCtx.createImageData(pw, ph);
+      const data = imgData.data;
+
+      for (let y = 0; y < ph; y++) {
+        for (let x = 0; x < pw; x++) {
+          let lum = y / (ph * 1.3);
+          const dx = x - 120, dy = y - 35;
+          if (dx*dx + dy*dy < 16*16) lum = 0.95;
+          const m1 = 65 + Math.sin(x * 0.05) * 16;
+          if (y > m1) lum = 0.45 + (y - m1) * 0.005;
+          const m2 = 90 + Math.sin(x * 0.09 + 2) * 20;
+          if (y > m2) lum = 0.22 + (y - m2) * 0.004;
+          if (y > 118) lum = 0.35 + Math.sin(x * 0.4 + y * 0.6) * 0.15;
+
+          const c = sampleRamp(lum, x, y);
+          const idx = (y * pw + x) * 4;
+          data[idx] = c.r; data[idx+1] = c.g; data[idx+2] = c.b; data[idx+3] = 255;
+        }
+      }
+      previewCtx.putImageData(imgData, 0, 0);
+    }
+
+    const knightData = [
+      "..000000..",
+      ".01111110.",
+      "0122222210",
+      "0123003210",
+      "0122222210",
+      "0011111100",
+      ".01233210.",
+      ".01222210.",
+      ".01111110.",
+      ".01000010.",
+      "020....020",
+      "00......00"
+    ];
+
+    function renderKnightSprite() {
+      const sz = 160;
+      previewCanvas.width = sz; previewCanvas.height = sz;
+      previewInfo.textContent = `Pixel Knight (Palette Swap)`;
+      previewZoom.textContent = `Масштаб 12x`;
+
+      previewCtx.fillStyle = '#080c10';
+      previewCtx.fillRect(0, 0, sz, sz);
+
+      const toneMap = { '0': 0.05, '1': 0.35, '2': 0.70, '3': 0.95 };
+      const pxSize = 11;
+      const ox = (sz - 10 * pxSize) / 2, oy = (sz - 12 * pxSize) / 2;
+
+      for (let r = 0; r < 12; r++) {
+        for (let c = 0; c < 10; c++) {
+          const ch = knightData[r][c];
+          if (ch !== '.') {
+            const col = sampleRamp(toneMap[ch]);
+            previewCtx.fillStyle = rgbToHex(col.r, col.g, col.b);
+            previewCtx.fillRect(ox + c * pxSize, oy + r * pxSize, pxSize, pxSize);
+          }
+        }
+      }
+    }
+
+    function renderIslandHeightmap() {
+      const sz = 160;
+      previewCanvas.width = sz; previewCanvas.height = sz;
+      previewInfo.textContent = `Procedural Island Heightmap`;
+      previewZoom.textContent = `160 x 160 px`;
+
+      const imgData = previewCtx.createImageData(sz, sz);
+      const data = imgData.data;
+
+      for (let y = 0; y < sz; y++) {
+        for (let x = 0; x < sz; x++) {
+          const nx = (x - sz/2) / 55, ny = (y - sz/2) / 55;
+          const d = Math.hypot(nx, ny);
+          let h = (Math.sin(nx * 3) * Math.cos(ny * 3) * 0.4 + Math.sin(nx * 7) * 0.15 + 0.5) * (1.25 - d);
+          h = Math.max(0, Math.min(1, h));
+          const c = sampleRamp(h, x, y);
+          const idx = (y * sz + x) * 4;
+          data[idx] = c.r; data[idx+1] = c.g; data[idx+2] = c.b; data[idx+3] = 255;
+        }
+      }
+      previewCtx.putImageData(imgData, 0, 0);
+    }
+
+    function renderRetroPlasma() {
+      const pw = 160, ph = 120;
+      previewCanvas.width = pw; previewCanvas.height = ph;
+      previewInfo.textContent = `Retro Demoscene Plasma FX`;
+      previewZoom.textContent = `160 x 120 px`;
+
+      const imgData = previewCtx.createImageData(pw, ph);
+      const data = imgData.data;
+      const t = state.animTimer * 2;
+
+      for (let y = 0; y < ph; y++) {
+        for (let x = 0; x < pw; x++) {
+          const v = (Math.sin(x * 0.08 + t) + Math.sin(y * 0.08 - t) + Math.sin((x+y)*0.05 + t) + 3) / 6;
+          const c = sampleRamp(v, x, y);
+          const idx = (y * pw + x) * 4;
+          data[idx] = c.r; data[idx+1] = c.g; data[idx+2] = c.b; data[idx+3] = 255;
+        }
+      }
+      previewCtx.putImageData(imgData, 0, 0);
+    }
+
+    document.querySelectorAll('.view-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.view-tab-btn').forEach(b => {
+          b.className = 'view-tab-btn px-2.5 py-1 rounded-md transition font-medium text-slate-400 hover:text-white whitespace-nowrap';
+        });
+        btn.className = 'view-tab-btn px-2.5 py-1 rounded-md transition font-medium bg-retro-700 text-white shadow whitespace-nowrap';
+        state.previewMode = btn.dataset.view;
+        previewTipText.textContent = PREVIEW_TIPS[state.previewMode] || "";
+        renderPreview();
+      });
+    });
+
+    function animationLoop() {
+      state.animTimer += 0.04;
+      if (['plasma', 'torus', 'sphere'].includes(state.previewMode)) {
+        renderPreview();
+      }
+      requestAnimationFrame(animationLoop);
+    }
+
+    /* ==========================================================================
+       8. ГЕНЕРАЦИЯ КОДА (CSS / HEX / GLSL)
+       ========================================================================== */
+    function updateCodeOutput() {
+      const sorted = [...state.stops].sort((a, b) => a.pos - b.pos);
+
+      if (state.activeCodeTab === 'css') {
+        const stopsStr = sorted.map(s => `${s.color} ${(s.pos * 100).toFixed(1)}%`).join(', ');
+        codeOutput.value = `/* CSS Linear Gradient */\nbackground: linear-gradient(90deg, ${stopsStr});`;
+      } else if (state.activeCodeTab === 'hex') {
+        const hexList = sorted.map(s => `"${s.color.toUpperCase()}"`).join(', ');
+        codeOutput.value = `// Массив цветов палитры\nconst rampPalette = [\n  ${hexList}\n];`;
+      } else if (state.activeCodeTab === 'glsl') {
+        let glsl = `// GLSL / HLSL 1D Ramp Lookup Function\nvec3 sampleRamp(float t) {\n`;
+        for (let i = 0; i < sorted.length - 1; i++) {
+          const s0 = sorted[i], s1 = sorted[i + 1];
+          const c0 = hexToRgb(s0.color), c1 = hexToRgb(s1.color);
+          const r0 = (c0.r/255).toFixed(3), g0 = (c0.g/255).toFixed(3), b0 = (c0.b/255).toFixed(3);
+          const r1 = (c1.r/255).toFixed(3), g1 = (c1.g/255).toFixed(3), b1 = (c1.b/255).toFixed(3);
+          glsl += `  if (t <= ${s1.pos.toFixed(3)}) {\n`;
+          glsl += `    float f = (t - ${s0.pos.toFixed(3)}) / ${(s1.pos - s0.pos).toFixed(3)};\n`;
+          glsl += `    return mix(vec3(${r0}, ${g0}, ${b0}), vec3(${r1}, ${g1}, ${b1}), clamp(f, 0.0, 1.0));\n  }\n`;
+        }
+        const lastC = hexToRgb(sorted[sorted.length - 1].color);
+        glsl += `  return vec3(${(lastC.r/255).toFixed(3)}, ${(lastC.g/255).toFixed(3)}, ${(lastC.b/255).toFixed(3)});\n}`;
+        codeOutput.value = glsl;
+      }
+    }
+
+    const codeTabBtns = {
+      css: document.getElementById('tabCodeCss'),
+      hex: document.getElementById('tabCodeHex'),
+      glsl: document.getElementById('tabCodeGlsl')
+    };
+
+    function setCodeTab(tab) {
+      state.activeCodeTab = tab;
+      Object.keys(codeTabBtns).forEach(k => {
+        if (k === tab) {
+          codeTabBtns[k].className = 'code-tab-btn px-2 py-1 text-xs rounded bg-retro-700 text-retro-accent font-medium';
+        } else {
+          codeTabBtns[k].className = 'code-tab-btn px-2 py-1 text-xs rounded text-slate-400 hover:text-slate-200';
+        }
+      });
+      updateCodeOutput();
+    }
+
+    codeTabBtns.css.addEventListener('click', () => setCodeTab('css'));
+    codeTabBtns.hex.addEventListener('click', () => setCodeTab('hex'));
+    codeTabBtns.glsl.addEventListener('click', () => setCodeTab('glsl'));
+
+    btnCopyCode.addEventListener('click', () => {
+      codeOutput.select();
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(codeOutput.value).then(() => showToast('Код скопирован в буфер!'));
+      } else {
+        document.execCommand('copy');
+        showToast('Код скопирован в буфер!');
+      }
+    });
+
+    /* ==========================================================================
+       9. КАТАЛОГ ПРЕСЕТОВ С CANVAS-ПЛАШКАМИ И СВОТЧАМИ
+       ========================================================================== */
+    function renderPresetsCatalog() {
+      presetsContainer.innerHTML = '';
+
+      const combined = [...customPresets, ...ALL_PRESETS];
+      customCountDisplay.textContent = customPresets.length;
+      presetCountBadge.textContent = `${combined.length} пресетов`;
+
+      const q = state.searchQuery.toLowerCase().trim();
+      const filtered = combined.filter(p => {
+        const matchCat = state.activeCategory === 'all' || p.cat === state.activeCategory;
+        const matchQ = p.name.toLowerCase().includes(q);
+        return matchCat && matchQ;
+      });
+
+      filtered.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'group text-left p-2.5 rounded-lg bg-retro-800 hover:bg-retro-700/80 border border-retro-700 hover:border-slate-400 transition flex flex-col gap-2 cursor-pointer relative';
+
+        const sorted = [...p.stops].sort((a, b) => a.pos - b.pos);
+
+        // 1. Аппаратно отрисованная полоса градиента на Canvas
+        const canvasStrip = document.createElement('canvas');
+        canvasStrip.className = 'w-full h-5 rounded border border-retro-600 block shadow-inner group-hover:scale-[1.02] transition-transform';
+        canvasStrip.width = 160;
+        canvasStrip.height = 20;
+        const cctx = canvasStrip.getContext('2d');
+        const grad = cctx.createLinearGradient(0, 0, 160, 0);
+        sorted.forEach(s => {
+          grad.addColorStop(Math.max(0, Math.min(1, s.pos)), s.color);
+        });
+        cctx.fillStyle = grad;
+        cctx.fillRect(0, 0, 160, 20);
+
+        // 2. Блок чистых цветовых свотчей (кубиков)
+        const swatchesRow = document.createElement('div');
+        swatchesRow.className = 'flex items-center gap-1 w-full overflow-hidden';
+        sorted.forEach(s => {
+          const swatch = document.createElement('div');
+          swatch.className = 'h-2 flex-1 rounded-sm border border-black/40 shadow-sm';
+          swatch.style.backgroundColor = s.color;
+          swatch.title = s.color;
+          swatchesRow.appendChild(swatch);
+        });
+
+        // 3. Блок заголовка
+        const titleRow = document.createElement('div');
+        titleRow.className = 'flex items-center justify-between w-full mt-0.5';
+
+        const titleText = document.createElement('div');
+        titleText.className = 'truncate text-[11px] font-medium text-slate-300 group-hover:text-white';
+        titleText.textContent = p.name;
+        titleText.title = p.name;
+        titleRow.appendChild(titleText);
+
+        if (p.cat === 'custom') {
+          const delBtn = document.createElement('button');
+          delBtn.className = 'text-red-400 hover:text-red-300 px-1 text-xs font-bold';
+          delBtn.textContent = '✕';
+          delBtn.title = 'Удалить пресет';
+          delBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            customPresets = customPresets.filter(cp => cp.id !== p.id);
+            saveStoredCustomPresets(customPresets);
+            renderPresetsCatalog();
+            showToast(`Пресет "${p.name}" удален`);
+          });
+          titleRow.appendChild(delBtn);
+        }
+
+        card.appendChild(canvasStrip);
+        card.appendChild(swatchesRow);
+        card.appendChild(titleRow);
+
+        card.addEventListener('click', () => {
+          applyPreset(p);
+        });
+
+        presetsContainer.appendChild(card);
+      });
+    }
+
+    function applyPreset(p) {
+      state.stops = p.stops.map(s => ({
+        id: state.nextId++,
+        pos: s.pos,
+        color: s.color
+      }));
+      state.selectedStopId = state.stops[0].id;
+      showToast(`Применен: ${p.name}`);
+      updateUI();
+    }
+
+    presetSearchInput.addEventListener('input', (e) => {
+      state.searchQuery = e.target.value;
+      renderPresetsCatalog();
+    });
+
+    document.querySelectorAll('.cat-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.cat-pill').forEach(b => {
+          b.className = 'cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-slate-300 hover:bg-retro-700 whitespace-nowrap';
+        });
+        pill.className = 'cat-pill px-2.5 py-1 rounded-full bg-retro-accent text-retro-900 font-bold whitespace-nowrap';
+        state.activeCategory = pill.dataset.cat;
+        renderPresetsCatalog();
+      });
+    });
+
+    btnOpenSaveCustom.addEventListener('click', () => {
+      inputCustomName.value = `Моя палитра #${customPresets.length + 1}`;
+      modalCustomPreset.classList.remove('hidden');
+      inputCustomName.focus();
+    });
+
+    function closeModal() {
+      modalCustomPreset.classList.add('hidden');
+    }
+    btnCancelModal.addEventListener('click', closeModal);
+    btnCloseModalBtn.addEventListener('click', closeModal);
+
+    btnConfirmSaveCustom.addEventListener('click', () => {
+      const name = inputCustomName.value.trim() || `Палитра #${customPresets.length + 1}`;
+      const sorted = [...state.stops].sort((a, b) => a.pos - b.pos);
+      const newCustom = {
+        id: 'usr_' + Date.now(),
+        name: name,
+        cat: 'custom',
+        stops: sorted.map(s => ({ pos: s.pos, color: s.color }))
+      };
+      customPresets.unshift(newCustom);
+      saveStoredCustomPresets(customPresets);
+      closeModal();
+      showToast(`Пресет "${name}" успешно сохранен!`);
+
+      document.querySelector('.cat-pill[data-cat="custom"]').click();
+    });
+
+    /* ==========================================================================
+       10. ЭКСПОРТ PNG И ДЕЙСТВИЯ
+       ========================================================================== */
+    function downloadRampPng() {
+      const w = state.width, h = state.height;
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = w; exportCanvas.height = h;
+      const exportCtx = exportCanvas.getContext('2d');
+
+      const imgData = exportCtx.createImageData(w, h);
+      const data = imgData.data;
+
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const t = w > 1 ? x / (w - 1) : 0;
+          const c = sampleRamp(t, x, y);
+          const idx = (y * w + x) * 4;
+          data[idx] = c.r; data[idx+1] = c.g; data[idx+2] = c.b; data[idx+3] = 255;
+        }
+      }
+      exportCtx.putImageData(imgData, 0, 0);
+
+      exportCanvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ramp_${w}x${h}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast(`Текстура ramp_${w}x${h}.png скачана!`);
+      }, 'image/png');
+    }
+
+    btnDownloadPng.addEventListener('click', downloadRampPng);
+    btnQuickPng.addEventListener('click', downloadRampPng);
+
+    btnInvert.addEventListener('click', () => {
+      state.stops.forEach(s => s.pos = Math.round((1.0 - s.pos) * 1000) / 1000);
+      showToast('Градиент инвертирован');
+      updateUI();
+    });
+
+    btnRandomize.addEventListener('click', () => {
+      const count = Math.floor(Math.random() * 3) + 3;
+      const newStops = [];
+      const baseHue = Math.floor(Math.random() * 360);
+      for (let i = 0; i < count; i++) {
+        const pos = i / (count - 1);
+        const h = (baseHue + i * 45) % 360;
+        const s = 65 + Math.random() * 25;
+        const l = 15 + (i / (count - 1)) * 75;
+        newStops.push({
+          id: state.nextId++,
+          pos: Math.round(pos * 100) / 100,
+          color: hslToHex(h, s, l)
+        });
+      }
+      state.stops = newStops;
+      state.selectedStopId = newStops[0].id;
+      showToast('Сгенерирована новая палитра');
+      updateUI();
+    });
+
+    selectInterpolation.addEventListener('change', (e) => {
+      state.interpolation = e.target.value;
+      updateUI();
+    });
+
+    sliderSteps.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      state.steps = val;
+      stepsValDisplay.textContent = val === 1 ? 'Выкл (Гладко)' : `${val} шагов`;
+      updateUI();
+    });
+
+    checkDithering.addEventListener('change', (e) => {
+      state.useDithering = e.target.checked;
+      updateUI();
+    });
+
+    checkGamma.addEventListener('change', (e) => {
+      state.useGamma = e.target.checked;
+      updateUI();
+    });
+
+    selectWidth.addEventListener('change', (e) => {
+      state.width = parseInt(e.target.value);
+      renderPreview();
+    });
+
+    selectHeight.addEventListener('change', (e) => {
+      state.height = parseInt(e.target.value);
+      renderPreview();
+    });
+
+    checkPixelated.addEventListener('change', (e) => {
+      state.pixelated = e.target.checked;
+      previewCanvas.classList.toggle('pixelated', state.pixelated);
+    });
+
+    function showToast(msg) {
+      const toast = document.createElement('div');
+      toast.className = 'toast-anim pointer-events-auto bg-retro-800 border border-retro-600 text-slate-100 text-xs px-3.5 py-2 rounded-lg shadow-xl flex items-center gap-2';
+      toast.innerHTML = `<span class="w-2 h-2 rounded-full bg-retro-accent"></span><span>${msg}</span>`;
+      toastContainer.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(8px)';
+        toast.style.transition = 'all 0.25s ease';
+        setTimeout(() => toast.remove(), 250);
+      }, 2200);
+    }
+
+    function updateUI() {
+      renderMainGradientBar();
+      renderStopsMarkers();
+      renderPreview();
+      updateCodeOutput();
+    }
+
+    function initApp() {
+      renderPresetsCatalog();
+      updateUI();
+      animationLoop();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
+
+    window.addEventListener('resize', () => {
+      renderMainGradientBar();
+      renderStopsMarkers();
+    });
+  </script>
+</body>
+</html>

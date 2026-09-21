@@ -463,6 +463,88 @@ to {
   color:#888}
 /* CONTACTS */
 
+/* TOOLS / PROJECTS */
+
+.tools {
+  margin:8px 0 48px}
+.tools-head {
+  margin-bottom:22px}
+.tools-head h2 {
+  font-family:var(--font-title);
+  font-size:clamp(28px,4.5vw,46px);
+  line-height:1;
+  margin-bottom:12px}
+.tools-head h2 span {
+  color:var(--acid)}
+.tools-head p {
+  color:#9e9ea7;
+  max-width:640px;
+  font-size:13px;
+  line-height:1.6}
+.tools-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px}
+.tool-card {
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:22px 20px;
+  backdrop-filter:blur(10px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  transition:0.2s;
+  text-decoration:none;
+  color:inherit;
+  min-height:220px}
+.tool-card:hover {
+  border-color:var(--acid);
+  transform:translateY(-3px);
+  background:rgba(22,22,28,0.92)}
+.tool-tag {
+  display:inline-flex;
+  width:fit-content;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--cyan);
+  border:1px solid rgba(0,240,255,0.28);
+  background:rgba(0,240,255,0.06);
+  padding:4px 10px;
+  border-radius:100px}
+.tool-card h3 {
+  font-family:var(--font-title);
+  font-size:clamp(20px,2.4vw,26px);
+  font-weight:800;
+  letter-spacing:-0.03em;
+  line-height:1.05;
+  color:#fff}
+.tool-card p {
+  font-size:12px;
+  color:#8f909b;
+  line-height:1.55;
+  flex:1}
+.tool-card .tool-meta {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  border-top:1px solid rgba(255,255,255,0.06);
+  padding-top:12px;
+  margin-top:auto}
+.tool-stack {
+  font-size:10px;
+  color:#6f7180;
+  letter-spacing:0.04em;
+  text-transform:uppercase}
+.tool-open {
+  font-size:11px;
+  font-weight:700;
+  color:var(--acid);
+  letter-spacing:0.06em;
+  text-transform:uppercase}
 .contacts {
   background:var(--panel);
   border:1px solid var(--border);
@@ -575,6 +657,13 @@ footer {
 .cta-row .btn-primary, .cta-row .btn-outline {
   width:100%;
   text-align:center}
+.nav-actions {
+  gap:6px}
+.btn-mini {
+  padding:7px 10px;
+  font-size:10px}
+.tool-card {
+  min-height:0}
 }
 
 
@@ -597,6 +686,8 @@ button,
 <header>
   <div class="brand">NIKITA<span>.</span>BYCHKOV</div>
   <div class="nav-actions">
+    <a href="#playable" class="btn-mini">DEMO</a>
+    <a href="#tools" class="btn-mini">TOOLS</a>
     <button class="btn-mini" id="audioToggle">SOUND: ON</button>
     <a href="#contacts" class="btn-mini">CONTACTS ↗</a>
   </div>
@@ -635,6 +726,7 @@ button,
         АКТУАЛЬНЫЙ РЕЛИЗ ↗
       </a>
       <a href="#playable" class="btn-outline">ДЕМКА ↓</a>
+      <a href="#tools" class="btn-outline">TOOLS ↓</a>
       <a href="https://t.me/Kwadratik" target="_blank" rel="noopener" class="btn-outline">TELEGRAM ↗</a>
       <a href="tel:+79652959713" class="btn-outline">+7 (965) 295-97-13</a>
     </div>
@@ -737,6 +829,42 @@ button,
           </button>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- TOOLS -->
+  <section class="tools" id="tools">
+    <div class="tools-head">
+      <h2>WEB TOOLS<br><span>FOR PRODUCTION.</span></h2>
+      <p>
+        Отдельные утилиты в том же production-подходе: быстрый HTML-воркфлоу и генерация цветовых рамп под шейдеры, пиксель-арт и LUT.
+      </p>
+    </div>
+
+    <div class="tools-grid">
+      <a class="tool-card" href="tools/html-code-studio.html" target="_blank" rel="noopener">
+        <span class="tool-tag">// 01. EDITOR</span>
+        <h3>HTML Code Studio</h3>
+        <p>
+          Безлимитный редактор HTML/CSS/JS с живым превью, шаблонами, автосохранением и экспортом файла под кастомным именем.
+        </p>
+        <div class="tool-meta">
+          <span class="tool-stack">HTML · Live Preview · Export</span>
+          <span class="tool-open">OPEN ↗</span>
+        </div>
+      </a>
+
+      <a class="tool-card" href="tools/ramp-studio.html" target="_blank" rel="noopener">
+        <span class="tool-tag">// 02. COLOR</span>
+        <h3>RampStudio</h3>
+        <p>
+          Генератор цветовых градиентов и LUT-текстур: интерактивные стопы, экспорт PNG, палитры под шейдеры и пиксель-арт.
+        </p>
+        <div class="tool-meta">
+          <span class="tool-stack">Gradients · LUT · PNG</span>
+          <span class="tool-open">OPEN ↗</span>
+        </div>
+      </a>
     </div>
   </section>
 

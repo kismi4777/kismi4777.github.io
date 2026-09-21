@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Code Studio & Exporter</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .code-font { font-family: 'Fira Code', monospace; }
+        /* Custom scrollbar for editors */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 shadow-lg">
+        <div class="flex items-center space-x-3">
+            <div class="bg-indigo-600 p-2.5 rounded-xl shadow-md shadow-indigo-500/30 flex items-center justify-center text-white font-bold text-lg">
+                <i class="fa-solid fa-code"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                    HTML Code Studio <span class="text-xs uppercase px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">v2.0</span>
+                </h1>
+                <p class="text-xs text-slate-400">Безлимитный редактор кода, кастомное имя файла и живой предпросмотр</p>
+            </div>
+        </div>
+
+        <!-- Action Toolbar with Filename Input & Export -->
+        <div class="flex items-center flex-wrap gap-2.5">
+            <!-- Filename input group -->
+            <div class="flex items-center bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 shadow-inner">
+                <i class="fa-solid fa-file-pen text-slate-400 mr-2 text-xs"></i>
+                <input type="text" id="filename-input" value="index.html" placeholder="filename.html" 
+                    class="bg-transparent text-slate-200 text-xs font-medium focus:outline-none w-28 sm:w-36 code-font">
+            </div>
+
+            <button onclick="app.loadTemplate()" class="px-3 py-2 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-2 shadow-sm" title="Вставить шаблон">
+                <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> Шаблон
+            </button>
+            <button onclick="app.copyCode()" class="px-3 py-2 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-2 shadow-sm" title="Копировать код">
+                <i class="fa-regular fa-copy text-sky-400"></i> Копировать
+            </button>
+            <button onclick="app.exportFile()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-2 shadow-md shadow-indigo-600/30">
+                <i class="fa-solid fa-download"></i> Сохранить .html
+            </button>
+        </div>
+    </header>
+
+    <!-- Responsive View Toggles for Mobile / Split Screen for Desktop -->
+    <div class="bg-slate-900/50 border-b border-slate-800/80 px-6 py-2 flex items-center justify-between text-xs text-slate-400">
+        <div class="flex items-center gap-4">
+            <span class="font-medium text-slate-300"><i class="fa-solid fa-desktop mr-1.5 text-indigo-400"></i> Рабочая область:</span>
+            <div class="inline-flex rounded-lg bg-slate-800 p-0.5 border border-slate-700">
+                <button onclick="app.switchView('split')" id="btn-view-split" class="px-3 py-1 rounded-md text-xs font-medium bg-indigo-600 text-white transition shadow">Раздельно</button>
+                <button onclick="app.switchView('editor')" id="btn-view-editor" class="px-3 py-1 rounded-md text-xs font-medium text-slate-300 hover:text-white transition">Только код</button>
+                <button onclick="app.switchView('preview')" id="btn-view-preview" class="px-3 py-1 rounded-md text-xs font-medium text-slate-300 hover:text-white transition">Только превью</button>
+            </div>
+        </div>
+        <div class="hidden sm:flex items-center gap-2">
+            <span id="auto-refresh-status" class="flex items-center gap-1.5 text-emerald-400"><i class="fa-solid fa-circle text-[8px]"></i> Автообновление превью</span>
+        </div>
+    </div>
+
+    <main id="main-grid" class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 md:p-6 overflow-hidden">
+        
+        <!-- Editor Section -->
+        <section id="pane-editor" class="flex flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl min-h-[400px] lg:min-h-0">
+            <div class="bg-slate-900/80 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <div class="flex space-x-1.5">
+                        <div class="w-3 h-3 rounded-full bg-rose-500/80"></div>
+                        <div class="w-3 h-3 rounded-full bg-amber-500/80"></div>
+                        <div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
+                    </div>
+                    <span class="text-xs font-semibold text-slate-300 ml-2 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-code text-indigo-400"></i> Редактор кода (Неограниченная длина)
+                    </span>
+                </div>
+                <div class="flex items-center space-x-3 text-xs text-slate-400">
+                    <span id="char-count">0 символов</span>
+                    <span class="text-slate-600">|</span>
+                    <span id="line-count">0 строк</span>
+                    <label class="cursor-pointer hover:text-white transition flex items-center gap-1 ml-2 bg-slate-800 px-2.5 py-1 rounded border border-slate-700">
+                        <i class="fa-solid fa-folder-open text-amber-400"></i> Загрузить файл
+                        <input type="file" id="file-input" accept=".html,.htm,.txt,.js,.css" class="hidden" onchange="app.handleFileUpload(event)">
+                    </label>
+                </div>
+            </div>
+            
+            <div class="relative flex-1 flex overflow-hidden">
+                <!-- Line Numbers with smooth sync scrolling -->
+                <div id="line-numbers" class="w-14 bg-slate-950/60 border-r border-slate-800/80 text-slate-600 code-font text-xs py-4 select-none text-right pr-3 overflow-hidden leading-relaxed">
+                    1
+                </div>
+                <!-- Code Textarea supporting massive amounts of text with fluid scrolling -->
+                <textarea id="code-editor" 
+                    placeholder="Вставляйте сюда любые объемы HTML, CSS и JS кода... Нет ограничений на длину." 
+                    oninput="app.onEditorInput()" 
+                    onscroll="app.syncScroll(this)"
+                    class="flex-1 w-full h-full bg-slate-900 text-slate-100 code-font text-sm p-4 resize-none focus:outline-none leading-relaxed whitespace-pre overflow-auto"
+                    spellcheck="false" wrap="off"></textarea>
+            </div>
+            
+            <div class="bg-slate-950/80 border-t border-slate-800 px-4 py-2 text-xs text-slate-500 flex justify-between items-center">
+                <span>Поддержка горизонтальной прокрутки (wrap выключен для удобства программирования)</span>
+                <span id="save-status" class="text-emerald-400"><i class="fa-solid fa-check"></i> Автосохранение активно</span>
+            </div>
+        </section>
+
+        <!-- Preview Section -->
+        <section id="pane-preview" class="flex flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl min-h-[400px] lg:min-h-0">
+            <div class="bg-slate-900/80 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-eye text-emerald-400"></i> Живой предпросмотр (Live Preview)
+                    </span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="app.refreshPreview()" class="px-3 py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-1.5 border border-slate-700">
+                        <i class="fa-solid fa-rotate-right text-sky-400"></i> Обновить превью
+                    </button>
+                    <button onclick="app.toggleFullscreenPreview()" class="px-2.5 py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-1 border border-slate-700" title="Открыть превью в новом окне">
+                        <i class="fa-solid fa-up-right-from-square"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-1 bg-white relative overflow-hidden flex flex-col">
+                <iframe id="preview-frame" class="w-full h-full border-0" sandbox="allow-scripts allow-modals allow-forms allow-same-origin"></iframe>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Toast Notification Popup -->
+    <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 transition-all duration-300 z-50 bg-slate-800 border border-slate-700 text-slate-100 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+        <div id="toast-icon" class="text-emerald-400 text-lg">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div>
+            <h4 id="toast-title" class="text-sm font-semibold">Успешно</h4>
+            <p id="toast-msg" class="text-xs text-slate-400">Действие выполнено</p>
+        </div>
+    </div>
+
+    <script>
+        class CodeStudio {
+            constructor() {
+                this.editor = document.getElementById('code-editor');
+                this.previewFrame = document.getElementById('preview-frame');
+                this.lineNumbers = document.getElementById('line-numbers');
+                this.charCount = document.getElementById('char-count');
+                this.lineCount = document.getElementById('line-count');
+                this.filenameInput = document.getElementById('filename-input');
+                
+                this.init();
+            }
+
+            init() {
+                // Load from localStorage backup
+                const savedCode = localStorage.getItem('html_studio_code_v2');
+                const savedFilename = localStorage.getItem('html_studio_filename_v2');
+
+                if (savedCode !== null) {
+                    this.editor.value = savedCode;
+                } else {
+                    this.editor.value = this.getDefaultTemplate();
+                }
+
+                if (savedFilename) {
+                    this.filenameInput.value = savedFilename;
+                }
+
+                this.updateMetrics();
+                this.refreshPreview();
+
+                // Auto-save interval
+                setInterval(() => {
+                    localStorage.setItem('html_studio_code_v2', this.editor.value);
+                    localStorage.setItem('html_studio_filename_v2', this.filenameInput.value);
+                }, 2500);
+            }
+
+            getDefaultTemplate() {
+                return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Интерактивная страница</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"><\/script>
+</head>
+<body class="bg-gradient-to-tr from-slate-900 via-purple-950 to-slate-900 text-white min-h-screen flex items-center justify-center p-6">
+    <div class="max-w-lg w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl text-center">
+        <div class="w-16 h-16 bg-gradient-to-r from-pink-500 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-indigo-500/40">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+            </svg>
+        </div>
+        <h1 class="text-3xl font-extrabold mb-3 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">Привет из HTML Studio!</h1>
+        <p class="text-slate-300 text-sm mb-8 leading-relaxed">Этот код написан в безлимитном редакторе. Вы можете вставлять сколько угодно строк кода, менять название файла и мгновенно скачивать готовый проект.</p>
+        <button onclick="alertBox('Кнопка работает отлично!')" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 font-semibold rounded-2xl transition shadow-lg shadow-indigo-600/40 transform active:scale-95">
+            Нажми меня
+        </button>
+    </div>
+
+    <script>
+        function alertBox(msg) {
+            alert(msg);
+        }
+    <\/script>
+</body>
+</html>`;
+            }
+
+            loadTemplate() {
+                this.editor.value = this.getDefaultTemplate();
+                this.filenameInput.value = 'index.html';
+                this.onEditorInput();
+                this.showToast('Шаблон загружен', 'Красивый стартовый шаблон успешно добавлен', 'success');
+            }
+
+            onEditorInput() {
+                this.updateMetrics();
+                this.refreshPreview();
+            }
+
+            updateMetrics() {
+                const text = this.editor.value;
+                const chars = text.length;
+                const lines = text.split('\n').length;
+
+                this.charCount.innerText = `${chars.toLocaleString()} символов`;
+                this.lineCount.innerText = `${lines.toLocaleString()} строк`;
+                
+                this.updateLineNumbers(lines);
+            }
+
+            updateLineNumbers(count) {
+                let numbers = '';
+                for (let i = 1; i <= count; i++) {
+                    numbers += i + '<br>';
+                }
+                this.lineNumbers.innerHTML = numbers;
+            }
+
+            syncScroll(element) {
+                this.lineNumbers.scrollTop = element.scrollTop;
+                this.lineNumbers.scrollLeft = element.scrollLeft;
+            }
+
+            refreshPreview() {
+                const code = this.editor.value;
+                try {
+                    const doc = this.previewFrame.contentDocument || this.previewFrame.contentWindow.document;
+                    doc.open();
+                    doc.write(code);
+                    doc.close();
+                } catch (e) {
+                    console.error('Ошибка предпросмотра:', e);
+                }
+            }
+
+            switchView(mode) {
+                const paneEditor = document.getElementById('pane-editor');
+                const panePreview = document.getElementById('pane-preview');
+                const mainGrid = document.getElementById('main-grid');
+                
+                const btnSplit = document.getElementById('btn-view-split');
+                const btnEditor = document.getElementById('btn-view-editor');
+                const btnPreview = document.getElementById('btn-view-preview');
+
+                // Reset button styles
+                [btnSplit, btnEditor, btnPreview].forEach(b => {
+                    b.className = "px-3 py-1 rounded-md text-xs font-medium text-slate-300 hover:text-white transition";
+                });
+
+                paneEditor.classList.remove('hidden');
+                panePreview.classList.remove('hidden');
+                mainGrid.className = "flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 md:p-6 overflow-hidden";
+
+                if (mode === 'split') {
+                    btnSplit.className = "px-3 py-1 rounded-md text-xs font-medium bg-indigo-600 text-white transition shadow";
+                } else if (mode === 'editor') {
+                    panePreview.classList.add('hidden');
+                    mainGrid.className = "flex-1 grid grid-cols-1 gap-4 p-4 md:p-6 overflow-hidden";
+                    btnEditor.className = "px-3 py-1 rounded-md text-xs font-medium bg-indigo-600 text-white transition shadow";
+                } else if (mode === 'preview') {
+                    paneEditor.classList.add('hidden');
+                    mainGrid.className = "flex-1 grid grid-cols-1 gap-4 p-4 md:p-6 overflow-hidden";
+                    btnPreview.className = "px-3 py-1 rounded-md text-xs font-medium bg-indigo-600 text-white transition shadow";
+                }
+            }
+
+            copyCode() {
+                const text = this.editor.value;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        this.showToast('Скопировано', 'Весь исходный код скопирован в буфер обмена', 'success');
+                    }).catch(() => {
+                        this.fallbackCopy(text);
+                    });
+                } else {
+                    this.fallbackCopy(text);
+                }
+            }
+
+            fallbackCopy(text) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    this.showToast('Скопировано', 'Код скопирован в буфер обмена', 'success');
+                } catch (e) {
+                    this.showToast('Ошибка', 'Не удалось скопировать текст', 'error');
+                }
+                document.body.removeChild(textarea);
+            }
+
+            exportFile() {
+                const code = this.editor.value;
+                let filename = this.filenameInput.value.trim();
+
+                if (!filename) {
+                    filename = 'index.html';
+                }
+
+                // Ensure .html extension
+                if (!filename.endsWith('.html') && !filename.endsWith('.htm')) {
+                    filename += '.html';
+                }
+
+                const blob = new Blob([code], { type: 'text/html;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                this.showToast('Файл сохранен', `Файл "${filename}" успешно скачан на устройство`, 'success');
+            }
+
+            handleFileUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.editor.value = e.target.result;
+                    this.filenameInput.value = file.name;
+                    this.onEditorInput();
+                    this.showToast('Файл загружен', `Успешно открыт: ${file.name}`, 'success');
+                };
+                reader.readAsText(file);
+                event.target.value = ''; // Reset file input
+            }
+
+            toggleFullscreenPreview() {
+                const code = this.editor.value;
+                const newWindow = window.open();
+                if (newWindow) {
+                    newWindow.document.open();
+                    newWindow.document.write(code);
+                    newWindow.document.close();
+                } else {
+                    this.showToast('Ошибка', 'Разрешите всплывающие окна в браузере для просмотра', 'error');
+                }
+            }
+
+            showToast(title, msg, type = 'success') {
+                const toast = document.getElementById('toast');
+                const toastTitle = document.getElementById('toast-title');
+                const toastMsg = document.getElementById('toast-msg');
+                const toastIcon = document.getElementById('toast-icon');
+
+                toastTitle.innerText = title;
+                toastMsg.innerText = msg;
+
+                if (type === 'success') {
+                    toastIcon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+                } else {
+                    toastIcon.innerHTML = '<i class="fa-solid fa-circle-exclamation text-rose-400"></i>';
+                }
+
+                toast.classList.remove('opacity-0', 'translate-y-20');
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-y-20');
+                }, 3000);
+            }
+        }
+
+        // Initialize App
+        const app = new CodeStudio();
+    </script>
+</body>
+</html>
