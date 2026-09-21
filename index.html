@@ -7,7 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+  onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js'"></script>
 <style>
 :root {
   --bg:#070709;
@@ -336,7 +337,33 @@ h1 b {
 #game-canvas {
   width:100%;
   height:100%;
-  display:block}
+  display:block;
+  position:relative;
+  z-index:2}
+.core-fallback {
+  position:absolute;
+  inset:0;
+  z-index:1;
+  display:grid;
+  place-items:center;
+  pointer-events:none}
+.core-fallback[hidden] { display:none }
+.core-fallback-orb {
+  width:min(46vw,190px);
+  height:min(46vw,190px);
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 35% 30%,rgba(255,255,255,0.35),transparent 28%),
+    radial-gradient(circle at 50% 50%,#c9ff19 0%,#5a8a00 42%,#12160a 72%);
+  box-shadow:
+    0 0 40px rgba(201,255,25,0.35),
+    0 0 90px rgba(0,240,255,0.12),
+    inset 0 0 30px rgba(0,0,0,0.35);
+  animation:orbPulse 2.4s ease-in-out infinite}
+@keyframes orbPulse {
+  0%,100% { transform:scale(1) }
+  50% { transform:scale(1.06) }
+}
 .floating-num {
   position:absolute;
   pointer-events:none;
@@ -1274,6 +1301,9 @@ button,
 
       <div class="core-viewport" id="coreViewport">
         <div class="frenzy-alert" id="frenzyAlert">НЕЙРОННЫЙ ОВЕРДРАЙВ x5 — СПАМЬ ТАПАМИ</div>
+        <div class="core-fallback" id="coreFallback" aria-hidden="true">
+          <div class="core-fallback-orb"></div>
+        </div>
         <canvas id="game-canvas"></canvas>
         <div class="core-hint">ТАПАЙ ПО ВИРУСНОМУ ЯДРУ ДЛЯ СБОРА ДНК</div>
         <div class="mutate-overlay" id="mutateOverlay">
@@ -1439,6 +1469,7 @@ button,
     bgCanvas: document.getElementById('bg-canvas'),
     coreViewport: document.getElementById('coreViewport'),
     gameCanvas: document.getElementById('game-canvas'),
+    coreFallback: document.getElementById('coreFallback'),
     dnaValue: document.getElementById('dnaVal'),
     rateValue: document.getElementById('rateVal'),
     tierTag: document.getElementById('tierTag'),
@@ -1711,10 +1742,7 @@ button,
 
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (error) {
-           }
-
-    syncLeaderboardEntry();
+    } catch (_) {}
   }
 
   function makeGuestCode() {
@@ -2561,10 +2589,6 @@ button,
     const evolveBtn = elements.evolveButton;
     const prestigeBtn = elements.prestigeButton;
 
-    // Mutation / prestige stay above the upgrade list.
-    if (evolveBtn) grid.appendChild(evolveBtn);
-    if (prestigeBtn) grid.appendChild(prestigeBtn);
-
     for (const def of UPGRADE_DEFS) {
       const card = document.createElement('div');
       card.className = 'upgrade-card is-hidden';
@@ -2583,7 +2607,13 @@ button,
           <span class="up-cost" data-cost>0 EVO</span>
         </div>
       `;
-      grid.appendChild(card);
+
+      if (evolveBtn) {
+        grid.insertBefore(card, evolveBtn);
+      } else {
+        grid.appendChild(card);
+      }
+
       elements.upgrades[def.id] = card;
       elements.upgradeMeta[def.id] = {
         def,
@@ -2593,6 +2623,9 @@ button,
       };
       card.addEventListener('click', () => buyUpgrade(def.id));
     }
+
+    if (evolveBtn) grid.appendChild(evolveBtn);
+    if (prestigeBtn) grid.appendChild(prestigeBtn);
   }
 
   function buyUpgrade(type) {
@@ -3202,10 +3235,13 @@ button,
       createParticles();
 
       threeReady = true;
+      if (elements.coreFallback) elements.coreFallback.hidden = true;
       resizeThree();
       requestAnimationFrame(renderThree);
     } catch (error) {
-           }
+      threeReady = false;
+      if (elements.coreFallback) elements.coreFallback.hidden = false;
+    }
   }
 
   function createLights() {
