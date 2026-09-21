@@ -7,8 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
-  onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js'"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
 :root {
   --bg:#070709;
@@ -337,33 +336,7 @@ h1 b {
 #game-canvas {
   width:100%;
   height:100%;
-  display:block;
-  position:relative;
-  z-index:2}
-.core-fallback {
-  position:absolute;
-  inset:0;
-  z-index:1;
-  display:grid;
-  place-items:center;
-  pointer-events:none}
-.core-fallback[hidden] { display:none }
-.core-fallback-orb {
-  width:min(46vw,190px);
-  height:min(46vw,190px);
-  border-radius:50%;
-  background:
-    radial-gradient(circle at 35% 30%,rgba(255,255,255,0.35),transparent 28%),
-    radial-gradient(circle at 50% 50%,#c9ff19 0%,#5a8a00 42%,#12160a 72%);
-  box-shadow:
-    0 0 40px rgba(201,255,25,0.35),
-    0 0 90px rgba(0,240,255,0.12),
-    inset 0 0 30px rgba(0,0,0,0.35);
-  animation:orbPulse 2.4s ease-in-out infinite}
-@keyframes orbPulse {
-  0%,100% { transform:scale(1) }
-  50% { transform:scale(1.06) }
-}
+  display:block}
 .floating-num {
   position:absolute;
   pointer-events:none;
@@ -1301,9 +1274,6 @@ button,
 
       <div class="core-viewport" id="coreViewport">
         <div class="frenzy-alert" id="frenzyAlert">НЕЙРОННЫЙ ОВЕРДРАЙВ x5 — СПАМЬ ТАПАМИ</div>
-        <div class="core-fallback" id="coreFallback" aria-hidden="true">
-          <div class="core-fallback-orb"></div>
-        </div>
         <canvas id="game-canvas"></canvas>
         <div class="core-hint">ТАПАЙ ПО ВИРУСНОМУ ЯДРУ ДЛЯ СБОРА ДНК</div>
         <div class="mutate-overlay" id="mutateOverlay">
@@ -1349,8 +1319,8 @@ button,
           <div class="lb-head">
             <h3>ТАБЛИЦА ИГРОКОВ</h3>
             <p>
-              Онлайн-таблица всех визитов (Firebase). Имя необязательно — без него ты как <b>Гость-XXXX</b>.
-              Данные в облаке и не сбрасываются при обновлении сайта.
+              Имя необязательно — без него ты всё равно в таблице как <b>Гость-XXXX</b>.
+              Город определяется по IP приблизительно.
             </p>
           </div>
           <div class="lb-identity">
@@ -1359,7 +1329,6 @@ button,
           </div>
           <div class="lb-you" id="lbYou">Ты: —</div>
           <div class="lb-meta" id="lbMeta">
-            <span class="lb-chip">Сеть: <b id="chipOnline">подключение…</b></span>
             <span class="lb-chip">Устройство: <b id="chipDevice">…</b></span>
             <span class="lb-chip">Город: <b id="chipCity">…</b></span>
           </div>
@@ -1455,7 +1424,6 @@ button,
 <footer>© 2026 Никита Бычков — Unity Developer · Tech Artist · 3D Generalist</footer>
 <div class="toast" id="toast">СКОПИРОВАНО!</div>
 
-<script src="leaderboard-config.js"></script>
 <script>
 (() => {
   'use strict';
@@ -1469,7 +1437,6 @@ button,
     bgCanvas: document.getElementById('bg-canvas'),
     coreViewport: document.getElementById('coreViewport'),
     gameCanvas: document.getElementById('game-canvas'),
-    coreFallback: document.getElementById('coreFallback'),
     dnaValue: document.getElementById('dnaVal'),
     rateValue: document.getElementById('rateVal'),
     tierTag: document.getElementById('tierTag'),
@@ -1491,7 +1458,6 @@ button,
     lbEmpty: document.getElementById('lbEmpty'),
     chipDevice: document.getElementById('chipDevice'),
     chipCity: document.getElementById('chipCity'),
-    chipOnline: document.getElementById('chipOnline'),
     mutateOverlay: document.getElementById('mutateOverlay'),
     mutateTimer: document.getElementById('mutateTimer'),
     goalEarn: document.getElementById('goalEarn'),
@@ -1742,7 +1708,10 @@ button,
 
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (_) {}
+    } catch (error) {
+           }
+
+    syncLeaderboardEntry();
   }
 
   function makeGuestCode() {
@@ -1974,8 +1943,7 @@ button,
           name: typeof saved.name === 'string' ? saved.name.slice(0, 24) : '',
           code: saved.code || makeGuestCode(),
           device: saved.device || deviceInfo.label,
-          city: saved.city || '',
-          firstSeen: Number(saved.firstSeen) || 0
+          city: saved.city || ''
         };
       }
     } catch (_) {}
@@ -1986,8 +1954,7 @@ button,
       name: '',
       code,
       device: deviceInfo.label,
-      city: '',
-      firstSeen: 0
+      city: ''
     };
     savePlayerProfile(profile);
     return profile;
@@ -2007,186 +1974,65 @@ button,
     return custom || `Гость-${profile.code || 'XXXX'}`;
   }
 
-  const LB_CFG = window.LAB_LEADERBOARD || {};
-  const LB_URL = String(LB_CFG.url || '').replace(/\/$/, '');
-  let onlineRows = [];
-  let onlineStatus = 'подключение…';
-  let syncBusy = false;
-  let lastOnlineSync = 0;
-
-  function setOnlineStatus(text) {
-    onlineStatus = text;
-    if (elements.chipOnline) elements.chipOnline.textContent = text;
-  }
-
-  function normalizeRow(row) {
-    if (!row || !row.id) return null;
-    return {
-      id: String(row.id),
-      name: String(row.name || '').slice(0, 32),
-      evo: Math.max(0, Math.floor(Number(row.evo) || 0)),
-      device: String(row.device || '—').slice(0, 80),
-      city: String(row.city || '—').slice(0, 80),
-      updatedAt: Number(row.updatedAt) || 0,
-      firstSeen: Number(row.firstSeen) || Number(row.updatedAt) || 0
-    };
-  }
-
-  function loadLeaderboardLocal() {
+  function loadLeaderboard() {
     try {
       const saved = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || '[]');
       if (!Array.isArray(saved)) return [];
-      return saved.map(normalizeRow).filter(Boolean);
+      return saved
+        .filter(row => row && row.id)
+        .map(row => ({
+          id: String(row.id),
+          name: String(row.name || '').slice(0, 32),
+          evo: Math.max(0, Number(row.evo) || 0),
+          device: String(row.device || '—').slice(0, 64),
+          city: String(row.city || '—').slice(0, 64),
+          updatedAt: Number(row.updatedAt) || 0
+        }));
     } catch (_) {
       return [];
     }
   }
 
-  function saveLeaderboardLocal(rows) {
+  function saveLeaderboard(rows) {
     try {
-      localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(rows.slice(0, 200)));
-    } catch (_) {}
-  }
-
-  function loadLeaderboard() {
-    return (onlineRows.length ? onlineRows : loadLeaderboardLocal())
-      .slice()
-      .sort((a, b) => b.evo - a.evo || b.updatedAt - a.updatedAt);
-  }
-
-  function firebasePath(path) {
-    const clean = String(path || '').replace(/^\/+|\/+$/g, '');
-    return `${LB_URL}/${clean}.json`;
-  }
-
-  async function fetchOnlinePlayer(id) {
-    if (!LB_URL) return null;
-    const response = await fetch(firebasePath(`players/${id}`), { cache: 'no-store' });
-    if (!response.ok) throw new Error(`read ${response.status}`);
-    const data = await response.json();
-    return normalizeRow(data);
-  }
-
-  async function fetchOnlineLeaderboard() {
-    if (!LB_URL) {
-      setOnlineStatus('нужен Firebase');
-      return loadLeaderboardLocal();
-    }
-
-    const response = await fetch(firebasePath('players'), { cache: 'no-store' });
-    if (!response.ok) throw new Error(`list ${response.status}`);
-    const data = await response.json();
-    const rows = data && typeof data === 'object'
-      ? Object.values(data).map(normalizeRow).filter(Boolean)
-      : [];
-
-    onlineRows = rows;
-    saveLeaderboardLocal(rows);
-    setOnlineStatus(`онлайн · ${rows.length}`);
-    return rows;
-  }
-
-  async function pushOnlineEntry(entry) {
-    if (!LB_URL) throw new Error('no firebase url');
-    const response = await fetch(firebasePath(`players/${entry.id}`), {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(entry)
-    });
-    const text = await response.text();
-    if (!response.ok) {
-      const err = new Error(text || `write ${response.status}`);
-      err.status = response.status;
-      err.body = text;
-      throw err;
-    }
-    return entry;
-  }
-
-  function buildLocalEntry() {
-    const now = Date.now();
-    return {
-      id: player.id,
-      name: getPlayerDisplayName(),
-      evo: Math.max(0, Math.floor(state.totalEarned)),
-      device: player.device || deviceInfo.label,
-      city: player.city || networkInfo.city || '—',
-      updatedAt: now,
-      firstSeen: Number(player.firstSeen) || now
-    };
-  }
-
-  async function syncLeaderboardEntry(force = false) {
-    if (syncBusy) return;
-    if (!force && Date.now() - lastOnlineSync < 4000) {
-      // Still refresh local cache mirror for snappy UI.
-      const local = loadLeaderboardLocal();
-      const entry = buildLocalEntry();
-      const idx = local.findIndex(row => row.id === entry.id);
-      if (idx >= 0) local[idx] = { ...local[idx], ...entry, firstSeen: local[idx].firstSeen || entry.firstSeen };
-      else local.push(entry);
-      saveLeaderboardLocal(local);
-      if (!onlineRows.length) onlineRows = local;
-      else {
-        const oi = onlineRows.findIndex(row => row.id === entry.id);
-        if (oi >= 0) onlineRows[oi] = { ...onlineRows[oi], ...entry, firstSeen: onlineRows[oi].firstSeen || entry.firstSeen };
-        else onlineRows.push(entry);
-      }
-      renderLeaderboard();
-      return;
-    }
-
-    syncBusy = true;
-    try {
-      const entry = buildLocalEntry();
-      try {
-        const remote = await fetchOnlinePlayer(entry.id);
-        if (remote) {
-          entry.evo = Math.max(entry.evo, remote.evo || 0);
-          entry.firstSeen = remote.firstSeen || entry.firstSeen;
-          if (!player.firstSeen) {
-            player.firstSeen = entry.firstSeen;
-            savePlayerProfile(player);
-          }
-        } else if (!player.firstSeen) {
-          player.firstSeen = entry.firstSeen;
-          savePlayerProfile(player);
-        }
-      } catch (_) {}
-
-      await pushOnlineEntry(entry);
-      lastOnlineSync = Date.now();
-      await fetchOnlineLeaderboard();
-      renderLeaderboard();
+      localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(rows.slice(0, 50)));
     } catch (error) {
-      const local = loadLeaderboardLocal();
-      const entry = buildLocalEntry();
-      const idx = local.findIndex(row => row.id === entry.id);
-      if (idx >= 0) local[idx] = { ...local[idx], ...entry };
-      else local.push(entry);
-      saveLeaderboardLocal(local);
-      onlineRows = local;
-      if (/нужен Firebase|no firebase/i.test(String(error.message || ''))) {
-        setOnlineStatus('нужен Firebase');
-      } else {
-        setOnlineStatus('офлайн-кэш');
-      }
-      renderLeaderboard();
-    } finally {
-      syncBusy = false;
-    }
+           }
   }
 
   function updateMetaChips() {
-    if (elements.chipOnline) {
-      elements.chipOnline.textContent = onlineStatus;
-    }
     if (elements.chipDevice) {
       elements.chipDevice.textContent = player.device || deviceInfo.label;
     }
     if (elements.chipCity) {
       elements.chipCity.textContent = player.city || networkInfo.city || '…';
     }
+  }
+
+  function syncLeaderboardEntry() {
+    const rows = loadLeaderboard();
+    const displayName = getPlayerDisplayName();
+    const evo = Math.max(0, Math.floor(state.totalEarned));
+    const index = rows.findIndex(row => row.id === player.id);
+
+    const entry = {
+      id: player.id,
+      name: displayName,
+      evo,
+      device: player.device || deviceInfo.label,
+      city: player.city || networkInfo.city || '—',
+      updatedAt: Date.now()
+    };
+
+    if (index >= 0) {
+      rows[index] = entry;
+    } else if (evo > 0 || player.name) {
+      rows.push(entry);
+    }
+
+    rows.sort((a, b) => b.evo - a.evo || b.updatedAt - a.updatedAt);
+    saveLeaderboard(rows);
+    renderLeaderboard();
   }
 
   function escapeHtml(value) {
@@ -2198,7 +2044,7 @@ button,
   }
 
   function renderLeaderboard() {
-    const rows = loadLeaderboard();
+    const rows = loadLeaderboard().sort((a, b) => b.evo - a.evo || b.updatedAt - a.updatedAt);
     const youName = getPlayerDisplayName();
 
     updateMetaChips();
@@ -2224,7 +2070,7 @@ button,
 
     if (elements.lbEmpty) elements.lbEmpty.style.display = 'none';
 
-    rows.slice(0, 100).forEach((row, index) => {
+    rows.slice(0, 20).forEach((row, index) => {
       const card = document.createElement('article');
       card.className = 'lb-card' + (row.id === player.id ? ' is-you' : '');
       const suffix = row.id === player.id
@@ -2256,7 +2102,7 @@ button,
       panel.classList.toggle('active', panel.getAttribute('data-lab-panel') === next);
     });
     if (next === 'players') {
-      syncLeaderboardEntry(true);
+      renderLeaderboard();
     }
   }
 
@@ -2268,14 +2114,14 @@ button,
     player.city = networkInfo.city || player.city || 'неизвестно';
     savePlayerProfile(player);
     updateMetaChips();
-    await syncLeaderboardEntry(true);
+    syncLeaderboardEntry();
   }
 
   function applyPlayerName() {
     const nextName = String(elements.playerNameInput?.value || '').trim().slice(0, 24);
     player.name = nextName;
     savePlayerProfile(player);
-    syncLeaderboardEntry(true);
+    syncLeaderboardEntry();
     showToast(nextName ? 'ИМЯ СОХРАНЕНО' : 'ОТОБРАЖАЕШЬСЯ КАК ГОСТЬ');
     playSound(720, 'triangle', 0.08, 0.025);
   }
@@ -2589,6 +2435,10 @@ button,
     const evolveBtn = elements.evolveButton;
     const prestigeBtn = elements.prestigeButton;
 
+    // Mutation / prestige stay above the upgrade list.
+    if (evolveBtn) grid.appendChild(evolveBtn);
+    if (prestigeBtn) grid.appendChild(prestigeBtn);
+
     for (const def of UPGRADE_DEFS) {
       const card = document.createElement('div');
       card.className = 'upgrade-card is-hidden';
@@ -2607,13 +2457,7 @@ button,
           <span class="up-cost" data-cost>0 EVO</span>
         </div>
       `;
-
-      if (evolveBtn) {
-        grid.insertBefore(card, evolveBtn);
-      } else {
-        grid.appendChild(card);
-      }
-
+      grid.appendChild(card);
       elements.upgrades[def.id] = card;
       elements.upgradeMeta[def.id] = {
         def,
@@ -2623,9 +2467,6 @@ button,
       };
       card.addEventListener('click', () => buyUpgrade(def.id));
     }
-
-    if (evolveBtn) grid.appendChild(evolveBtn);
-    if (prestigeBtn) grid.appendChild(prestigeBtn);
   }
 
   function buyUpgrade(type) {
@@ -3235,13 +3076,10 @@ button,
       createParticles();
 
       threeReady = true;
-      if (elements.coreFallback) elements.coreFallback.hidden = true;
       resizeThree();
       requestAnimationFrame(renderThree);
     } catch (error) {
-      threeReady = false;
-      if (elements.coreFallback) elements.coreFallback.hidden = false;
-    }
+           }
   }
 
   function createLights() {
@@ -3455,9 +3293,8 @@ button,
   updateMetaChips();
   initializeThree();
   renderUI(true);
-  syncLeaderboardEntry(true);
+  syncLeaderboardEntry();
   refreshNetworkProfile();
-  setInterval(() => syncLeaderboardEntry(true), 45000);
   renderBackground();
   requestAnimationFrame(updateGame);
 })();
