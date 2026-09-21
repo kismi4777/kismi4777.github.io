@@ -1,382 +1,539 @@
 <!DOCTYPE html>
-<html lang="ru" class="dark">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>RampStudio // Генератор Цветовых Рамп и LUT-Текстур</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            retro: {
-              900: '#0c0f12',
-              850: '#12171d',
-              800: '#182026',
-              700: '#24303a',
-              600: '#344554',
-              accent: '#38ef7d',
-              accentHover: '#11998e',
-              amber: '#f59e0b',
-              cyber: '#00f0ff'
-            }
-          },
-          fontFamily: {
-            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
-          }
-        }
-      }
-    }
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>RampStudio — NIKITA.BYCHKOV</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-900: #0c0f12;
-      --bg-850: #12171d;
-      --bg-800: #182026;
-      --border-700: #24303a;
-      --border-600: #344554;
-      --accent: #38ef7d;
+      --bg: #070709;
+      --fg: #f3f3f3;
+      --acid: #c9ff19;
+      --cyan: #00f0ff;
+      --orange: #ff8a00;
+      --border: rgba(255, 255, 255, 0.08);
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-title: 'Space Grotesk', sans-serif;
     }
-    body { background-color: var(--bg-900); color: #e2e8f0; }
-    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-mono);
+      line-height: 1.4;
+      min-height: 100vh;
+      overflow-x: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    canvas#bg-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+    .overlay {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background: radial-gradient(circle at 50% 30%, transparent 0%, rgba(7,7,9,0.9) 80%);
+    }
+    header {
+      position: fixed; top: 0; left: 0; right: 0; height: 64px; padding: 0 5vw;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      z-index: 50; background: rgba(7,7,9,0.85); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .brand {
+      font-family: var(--font-title); font-weight: 800; font-size: 18px;
+      letter-spacing: -0.5px; color: inherit; text-decoration: none; white-space: nowrap;
+    }
+    .brand span { color: var(--acid); }
+    .nav-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .btn-mini {
+      border: 1px solid var(--border); background: #111116; color: #ccc;
+      padding: 8px 14px; font-size: 11px; font-weight: 600; cursor: pointer;
+      text-decoration: none; border-radius: 4px; transition: 0.2s;
+      display: inline-flex; align-items: center; min-height: 34px; font-family: var(--font-mono);
+    }
+    .btn-mini:hover { border-color: var(--acid); color: var(--acid); transform: translateY(-1px); }
+    main {
+      position: relative; z-index: 10; width: min(1120px, 92vw);
+      margin: 0 auto; padding: 90px 0 40px;
+    }
+    .section-head { margin-bottom: 18px; }
+    .section-head h1 {
+      font-family: var(--font-title); font-size: clamp(2.2rem, 5.5vw, 4.8rem);
+      font-weight: 800; line-height: 0.95; letter-spacing: -0.04em;
+      margin-bottom: 12px; text-transform: uppercase;
+    }
+    .section-head h1 b { color: transparent; -webkit-text-stroke: 1px rgba(255,255,255,0.45); }
+    .section-head p { color: #9e9ea7; max-width: 640px; font-size: 13px; line-height: 1.6; }
+    .cta-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+    .btn-primary, .btn-outline, .btn-danger {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      cursor: pointer; font-family: var(--font-mono); text-decoration: none;
+      border-radius: 4px; transition: 0.2s; user-select: none;
+    }
+    .btn-primary {
+      background: var(--acid); color: #08080a; border: 0; padding: 11px 18px;
+      font-weight: 700; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+      box-shadow: 0 0 25px rgba(201,255,25,0.2);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 35px rgba(201,255,25,0.4); }
+    .btn-outline {
+      background: transparent; color: #fff; border: 1px solid var(--border);
+      padding: 11px 16px; font-size: 11px; font-weight: 600;
+    }
+    .btn-outline:hover { border-color: #fff; transform: translateY(-2px); }
+    .btn-danger {
+      background: rgba(255,80,80,0.08); color: #ff8a8a; border: 1px solid rgba(255,80,80,0.25);
+      padding: 8px 12px; font-size: 11px; font-weight: 600;
+    }
+    .btn-danger:hover { border-color: #ff8a8a; }
+    .btn-danger:disabled { opacity: 0.3; cursor: not-allowed; }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+      gap: 14px;
+      align-items: start;
+    }
+    .stack { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+    .panel {
+      background: #09090d; border: 1px solid var(--border); border-radius: 10px;
+      overflow: hidden; box-shadow: 0 18px 40px rgba(0,0,0,0.45); min-width: 0;
+    }
+    .panel-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+      padding: 12px 14px; border-bottom: 1px solid var(--border); background: rgba(14,14,19,0.95);
+    }
+    .panel-head h2 {
+      font-family: var(--font-title); font-size: 12px; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--cyan); flex: 0 0 auto;
+    }
+    .panel-head .hint { font-size: 10px; color: #7a7a85; letter-spacing: 0.04em; text-transform: uppercase; }
+    .panel-body { padding: 14px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+    .ramp-track-wrap { position: relative; padding-bottom: 36px; }
+    #gradientBarTrack {
+      height: 56px; width: 100%; border: 1px solid var(--border); border-radius: 6px;
+      cursor: crosshair; position: relative; overflow: hidden; background: #0c0c10;
+    }
+    #gradientBarTrack:hover { border-color: rgba(255,255,255,0.2); }
+    #mainGradientCanvas { width: 100%; height: 100%; display: block; }
+    #stopsTrack { position: absolute; left: 0; right: 0; top: 56px; height: 34px; pointer-events: none; }
+    .stop-marker {
+      position: absolute; top: 0; transform: translateX(-50%);
+      width: 28px; height: 34px; pointer-events: auto; cursor: grab;
+      display: flex; flex-direction: column; align-items: center; z-index: 10;
+    }
+    .stop-marker.is-selected { z-index: 20; transform: translateX(-50%) scale(1.08); }
+    .stop-arrow {
+      width: 0; height: 0;
+      border-left: 6px solid transparent; border-right: 6px solid transparent;
+      border-bottom: 8px solid #fff;
+    }
+    .stop-marker.is-selected .stop-arrow {
+      border-bottom-color: var(--acid);
+      filter: drop-shadow(0 0 5px rgba(201,255,25,0.8));
+    }
+    .stop-dot {
+      width: 18px; height: 18px; border-radius: 50%; border: 2px solid #fff; margin-top: 2px;
+    }
+    .stop-marker.is-selected .stop-dot {
+      border-color: var(--acid);
+      box-shadow: 0 0 10px rgba(201,255,25,0.45);
+    }
+    .inspector {
+      display: grid;
+      grid-template-columns: auto minmax(140px, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: rgba(255,255,255,0.02);
+    }
+    .inspector-color { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+    #stopColorSwatch {
+      width: 36px; height: 36px; border-radius: 6px; border: 1px solid #fff; cursor: pointer; flex: 0 0 auto;
+    }
+    .field-label { font-size: 10px; color: #7a7a85; letter-spacing: 0.08em; text-transform: uppercase; }
+    .hex-row { display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+    .hex-row span { color: #666; }
+    #stopHexInput, #inputCustomName, #presetSearchInput, select, textarea {
+      background: #121217; border: 1px solid var(--border); color: #eee;
+      border-radius: 4px; font-family: var(--font-mono); font-size: 12px;
+    }
+    #stopHexInput { width: 5.5rem; padding: 6px 8px; text-transform: uppercase; }
+    #stopHexInput:focus, #inputCustomName:focus, #presetSearchInput:focus, select:focus, textarea:focus {
+      outline: none; border-color: var(--acid);
+    }
+    .pos-block { min-width: 0; }
+    .pos-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; color: #7a7a85; margin-bottom: 6px; }
+    #stopPosPercent { color: var(--acid); font-weight: 700; white-space: nowrap; }
+    input[type="range"] {
+      width: 100%; height: 6px; appearance: none; background: #181820; border-radius: 4px; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--acid); border: 0;
+    }
+    .badge-count {
+      display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 100px;
+      border: 1px solid var(--border); background: #121217; color: var(--acid);
+      font-size: 10px; font-weight: 700;
+    }
+    #presetSearchInput { width: 100%; padding: 10px 12px; }
+    .cat-row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+    .cat-pill {
+      border: 1px solid var(--border); background: #121217; color: #9e9ea7;
+      padding: 7px 10px; border-radius: 100px; font-size: 10px; font-weight: 600;
+      white-space: nowrap; cursor: pointer; font-family: var(--font-mono); transition: 0.15s;
+    }
+    .cat-pill:hover { color: #fff; }
+    .cat-pill.active { background: var(--acid); color: #08080a; border-color: var(--acid); font-weight: 800; }
+    #presetsContainer {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+      gap: 8px; max-height: 300px; overflow-y: auto; padding-right: 2px;
+    }
+    .preset-card {
+      text-align: left; padding: 10px; border-radius: 6px; background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: 0.15s; min-width: 0;
+    }
+    .preset-card:hover { border-color: var(--acid); background: rgba(201,255,25,0.04); }
+    .preset-strip { width: 100%; height: 18px; border-radius: 3px; border: 1px solid var(--border); display: block; }
+    .preset-swatches { display: flex; gap: 3px; width: 100%; overflow: hidden; }
+    .preset-swatch { height: 8px; flex: 1; border-radius: 2px; border: 1px solid rgba(0,0,0,0.35); }
+    .preset-title-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
+    .preset-title { font-size: 11px; color: #cfcfd6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .preset-del { border: 0; background: transparent; color: #ff8a8a; cursor: pointer; font-size: 12px; font-weight: 700; flex: 0 0 auto; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    @media (min-width: 1100px) {
+      .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    label.block { display: block; }
+    .toggle-card {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: rgba(255,255,255,0.02); min-width: 0;
+    }
+    .toggle-card .t { font-size: 12px; font-weight: 600; color: #eee; }
+    .toggle-card .d { font-size: 11px; color: #7a7a85; margin-top: 2px; }
+    select { width: 100%; padding: 10px; }
+    .steps-meta { display: flex; justify-content: space-between; font-size: 10px; color: #666; margin-top: 4px; }
+    #stepsValDisplay { color: var(--acid); font-size: 11px; font-weight: 700; }
+    .view-tabs, .code-tabs {
+      display: flex; gap: 4px; flex-wrap: wrap; padding: 3px; background: #0e0e13;
+      border: 1px solid var(--border); border-radius: 6px; max-width: 100%;
+    }
+    .view-tab-btn, .code-tab-btn {
+      border: 0; background: transparent; color: #8a8a95; padding: 7px 9px; border-radius: 4px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+      cursor: pointer; font-family: var(--font-mono); white-space: nowrap;
+    }
+    .view-tab-btn:hover, .code-tab-btn:hover { color: #fff; }
+    .view-tab-btn.active, .code-tab-btn.active { background: var(--acid); color: #08080a; }
+    .preview-stage {
+      width: 100%; aspect-ratio: 4 / 3; border: 1px solid var(--border); border-radius: 6px;
+      background: #0c0c10; overflow: hidden; position: relative;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #previewCanvas { max-width: 100%; max-height: 100%; display: block; }
+    .preview-meta {
+      position: absolute; left: 8px; right: 8px; bottom: 8px;
+      display: flex; justify-content: space-between; gap: 8px;
+      font-size: 10px; color: #9e9ea7; background: rgba(7,7,9,0.85);
+      border: 1px solid var(--border); border-radius: 4px; padding: 6px 8px;
+    }
+    #previewTipText { font-size: 11px; color: #888994; line-height: 1.5; }
+    .code-wrap { position: relative; }
+    #codeOutput {
+      width: 100%; min-height: 140px; padding: 12px; padding-top: 44px; resize: vertical;
+      color: var(--acid); line-height: 1.5; user-select: text; -webkit-user-select: text;
+    }
+    #btnCopyCode {
+      position: absolute; top: 8px; right: 8px; z-index: 2;
+      padding: 7px 10px; font-size: 10px;
+    }
     .pixelated {
       image-rendering: -moz-crisp-edges;
       image-rendering: -webkit-crisp-edges;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }
-    .checkered-bg {
-      background-image: 
-        linear-gradient(45deg, #1e293b 25%, transparent 25%), 
-        linear-gradient(-45deg, #1e293b 25%, transparent 25%), 
-        linear-gradient(45deg, transparent 75%, #1e293b 75%), 
-        linear-gradient(-45deg, transparent 75%, #1e293b 75%);
-      background-size: 16px 16px;
-      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+    .hidden { display: none !important; }
+    .modal {
+      position: fixed; inset: 0; z-index: 80; background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 16px;
     }
-    #gradientBarTrack, #stopsTrack, .stop-marker {
-      touch-action: none !important;
-      user-select: none;
-      -webkit-user-select: none;
+    .modal-card {
+      width: min(380px, 100%); background: #121217; border: 1px solid var(--border);
+      border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 12px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.85);
     }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #12171d; }
-    ::-webkit-scrollbar-thumb { background: #344554; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #4b6378; }
-
+    .modal-card h3 { font-family: var(--font-title); font-size: 16px; }
+    .modal-card p { font-size: 12px; color: #9e9ea7; line-height: 1.5; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+    #toastContainer {
+      position: fixed; bottom: 22px; right: 22px; z-index: 100;
+      display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+    }
+    .toast-item {
+      background: var(--acid); color: #08080a; padding: 10px 14px; border-radius: 4px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+      box-shadow: 0 0 25px rgba(201,255,25,0.25);
+    }
     @keyframes toastIn {
-      from { opacity: 0; transform: translateY(12px) scale(0.96); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .toast-anim {
-      animation: toastIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    .toast-anim { animation: toastIn 0.2s ease forwards; }
+    footer {
+      position: relative; z-index: 10; border-top: 1px solid var(--border);
+      padding: 22px 5vw; text-align: center; font-size: 11px; color: #666;
+    }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #0c0c10; }
+    ::-webkit-scrollbar-thumb { background: #2a2a33; border-radius: 4px; }
+    @media (max-width: 980px) {
+      .layout, .grid-2 { grid-template-columns: 1fr; }
+      .inspector { grid-template-columns: 1fr; }
+      .cta-row .btn-primary, .cta-row .btn-outline { width: 100%; }
     }
   </style>
 </head>
-<body class="bg-retro-900 text-slate-200 font-sans min-h-screen flex flex-col antialiased select-none">
+<body>
+  <canvas id="bg-canvas"></canvas>
+  <div class="overlay" aria-hidden="true"></div>
 
-  <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
-  <header class="border-b border-retro-700 bg-retro-850/90 backdrop-blur px-4 py-3 sticky top-0 z-30 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <a href="../index.html" class="text-[10px] sm:text-xs text-slate-400 hover:text-retro-accent transition font-mono">← Portfolio</a>
-      <div class="w-8 h-8 rounded bg-gradient-to-tr from-retro-accentHover to-retro-accent flex items-center justify-center shadow-lg shadow-retro-accent/20 flex-shrink-0">
-        <svg class="w-5 h-5 text-retro-900 font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-        </svg>
-      </div>
-      <div>
-        <h1 class="font-bold text-base sm:text-lg leading-tight tracking-wide text-white flex items-center gap-2">
-          RampStudio
-          <a href="https://t.me/Kwadratik" target="_blank" rel="noopener noreferrer" class="text-[10px] sm:text-xs px-2.5 py-0.5 rounded bg-retro-700 hover:bg-retro-600 text-retro-accent hover:text-white border border-retro-600 font-mono inline-flex items-center gap-1.5 transition shadow-sm active:scale-95" title="Telegram @Kwadratik">
-            <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
-            </svg>
-            <span>@Kwadratik</span>
-          </a>
-        </h1>
-        <p class="text-[11px] sm:text-xs text-slate-400">Генератор цветовых градиентов для шейдеров, пиксель-арта и игр</p>
-      </div>
-    </div>
-
-    <div class="flex items-center gap-1.5 sm:gap-2">
-      <button id="btnInvert" class="px-2.5 py-1.5 rounded-lg bg-retro-800 hover:bg-retro-700 text-xs font-medium border border-retro-700 transition flex items-center gap-1" title="Инвертировать направление градиента">
-        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-        <span class="hidden sm:inline">Инвертировать</span>
-      </button>
-      <button id="btnRandomize" class="px-2.5 py-1.5 rounded-lg bg-retro-800 hover:bg-retro-700 text-xs font-medium border border-retro-700 transition flex items-center gap-1" title="Случайная палитра">
-        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-        <span class="hidden sm:inline">Случайная</span>
-      </button>
-      <button id="btnDownloadPng" class="px-3 sm:px-4 py-1.5 rounded-lg bg-gradient-to-r from-retro-accentHover to-retro-accent hover:opacity-95 text-retro-900 font-semibold text-xs shadow-md shadow-retro-accent/20 transition flex items-center gap-1.5">
-        <svg class="w-4 h-4 text-retro-900" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        <span>PNG</span>
-      </button>
+  <header>
+    <a class="brand" href="../index.html">NIKITA<span>.</span>BYCHKOV</a>
+    <div class="nav-actions">
+      <a class="btn-mini" href="../index.html#tools">← TOOLS</a>
+      <a class="btn-mini" href="../index.html#contacts">CONTACTS ↗</a>
     </div>
   </header>
 
-  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
+  <main>
+    <div class="section-head">
+      <h1>RAMP<br><b>STUDIO.</b></h1>
+      <p>
+        Генератор цветовых рамп и LUT-текстур для шейдеров, пиксель-арта и игр:
+        собирай градиент, экспортируй PNG и копируй CSS / HEX / GLSL.
+      </p>
+    </div>
 
-    <!-- ЛЕВАЯ КОЛОНКА -->
-    <div class="lg:col-span-7 flex flex-col gap-5 sm:gap-6">
+    <div class="cta-row">
+      <button type="button" class="btn-primary" id="btnDownloadPng">Скачать PNG ↗</button>
+      <button type="button" class="btn-outline" id="btnInvert">Инвертировать</button>
+      <button type="button" class="btn-outline" id="btnRandomize">Случайная</button>
+      <button type="button" class="btn-outline" id="btnOpenSaveCustom">+ Сохранить пресет</button>
+    </div>
 
-      <!-- Интерактивная шкала -->
-      <section class="bg-retro-850 border border-retro-700 rounded-xl p-4 sm:p-5 shadow-lg relative flex flex-col gap-4">
-        <div class="flex items-center justify-between">
-          <h2 class="text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-retro-accent animate-pulse"></span>
-            Интерактивная шкала рампы
-          </h2>
-          <span class="text-[11px] sm:text-xs text-slate-400">Тапните по полосе для новой точки</span>
-        </div>
-
-        <div class="relative pt-1 pb-9 select-none">
-          <div id="gradientBarTrack" class="h-14 w-full rounded-lg border-2 border-retro-600 cursor-crosshair relative overflow-hidden shadow-inner checkered-bg transition-all hover:border-slate-400">
-            <canvas id="mainGradientCanvas" class="w-full h-full block pixelated"></canvas>
+    <div class="layout">
+      <div class="stack">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>// Интерактивная рампа</h2>
+            <span class="hint">Тап по полосе = новая точка</span>
           </div>
-          <div id="stopsTrack" class="absolute left-0 right-0 top-14 h-9 pointer-events-none"></div>
-        </div>
+          <div class="panel-body">
+            <div class="ramp-track-wrap">
+              <div id="gradientBarTrack">
+                <canvas id="mainGradientCanvas" class="pixelated"></canvas>
+              </div>
+              <div id="stopsTrack"></div>
+            </div>
+            <div id="stopInspector" class="inspector">
+              <div class="inspector-color">
+                <label>
+                  <input type="color" id="stopColorPicker" class="sr-only">
+                  <div id="stopColorSwatch" style="background-color:#8bac0f"></div>
+                </label>
+                <div>
+                  <div class="field-label">Цвет точки</div>
+                  <div class="hex-row">
+                    <span>#</span>
+                    <input type="text" id="stopHexInput" maxlength="6" value="8BAC0F">
+                  </div>
+                </div>
+              </div>
+              <div class="pos-block">
+                <div class="pos-meta">
+                  <span>Позиция</span>
+                  <span id="stopPosPercent">66.0% (168 / 255)</span>
+                </div>
+                <input type="range" id="stopPosSlider" min="0" max="100" step="0.5" value="66">
+              </div>
+              <button type="button" class="btn-danger" id="btnDeleteStop">Удалить</button>
+            </div>
+          </div>
+        </section>
 
-        <!-- Инспектор активной точки -->
-        <div id="stopInspector" class="bg-retro-800/80 border border-retro-700/80 rounded-lg p-3 sm:p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div class="flex items-center gap-3">
-            <label class="relative cursor-pointer group">
-              <input type="color" id="stopColorPicker" class="sr-only">
-              <div id="stopColorSwatch" class="w-9 h-9 rounded-lg border-2 border-white/80 shadow group-hover:scale-105 transition-transform" style="background-color: #8bac0f;"></div>
-            </label>
-            <div>
-              <div class="text-[10px] text-slate-400 uppercase font-mono">Цвет точки</div>
-              <div class="flex items-center gap-1 mt-0.5">
-                <span class="text-slate-500 font-mono">#</span>
-                <input type="text" id="stopHexInput" maxlength="6" value="8BAC0F" class="w-20 bg-retro-900 border border-retro-600 rounded px-2 py-1 font-mono uppercase text-slate-200 focus:outline-none focus:border-retro-accent text-xs">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>// Каталог пресетов</h2>
+            <span class="badge-count" id="presetCountBadge">—</span>
+          </div>
+          <div class="panel-body">
+            <input type="text" id="presetSearchInput" placeholder="Поиск: Game Boy, Magma, Acid, Sunset...">
+            <div class="cat-row" id="presetCatFilters">
+              <button type="button" data-cat="all" class="cat-pill active">Все</button>
+              <button type="button" data-cat="custom" class="cat-pill">Мои (<span id="customCountDisplay">0</span>)</button>
+              <button type="button" data-cat="retro" class="cat-pill">Ретро</button>
+              <button type="button" data-cat="computers" class="cat-pill">ЭВМ & CRT</button>
+              <button type="button" data-cat="pixel" class="cat-pill">Pixel Art</button>
+              <button type="button" data-cat="scivis" class="cat-pill">Тепловизоры</button>
+              <button type="button" data-cat="cyber" class="cat-pill">Киберпанк</button>
+              <button type="button" data-cat="nature" class="cat-pill">Природа</button>
+              <button type="button" data-cat="sky" class="cat-pill">Закаты</button>
+              <button type="button" data-cat="metals" class="cat-pill">Металлы</button>
+              <button type="button" data-cat="ui" class="cat-pill">UI</button>
+            </div>
+            <div id="presetsContainer"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><h2>// Настройки</h2></div>
+          <div class="panel-body">
+            <div class="grid-2">
+              <div>
+                <label class="field-label block" style="margin-bottom:6px">Интерполяция</label>
+                <select id="selectInterpolation">
+                  <option value="linear">Линейная (Linear)</option>
+                  <option value="smoothstep">Сглаженная (Smoothstep)</option>
+                  <option value="easein">Ускорение (Ease In)</option>
+                  <option value="easeout">Замедление (Ease Out)</option>
+                  <option value="stepped">Ступенчатая</option>
+                </select>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px">
+                  <label class="field-label">Постеризация</label>
+                  <span id="stepsValDisplay">Выкл (Гладко)</span>
+                </div>
+                <input type="range" id="sliderSteps" min="1" max="32" value="1">
+                <div class="steps-meta"><span>Гладко</span><span>4</span><span>8</span><span>16</span><span>32</span></div>
+              </div>
+              <div class="toggle-card">
+                <div>
+                  <div class="t">Dither Bayer 4×4</div>
+                  <div class="d">Ретро-дизеринг для текстур</div>
+                </div>
+                <input type="checkbox" id="checkDithering">
+              </div>
+              <div class="toggle-card">
+                <div>
+                  <div class="t">Gamma sRGB</div>
+                  <div class="d">Чище полутона</div>
+                </div>
+                <input type="checkbox" id="checkGamma" checked>
               </div>
             </div>
           </div>
+        </section>
 
-          <div class="flex-1 min-w-[140px] max-w-xs">
-            <div class="flex justify-between text-[11px] text-slate-400 font-mono mb-1">
-              <span>Позиция</span>
-              <span id="stopPosPercent" class="text-retro-accent font-semibold">66.0% (168 / 255)</span>
-            </div>
-            <input type="range" id="stopPosSlider" min="0" max="100" step="0.5" value="66" class="w-full h-1.5 bg-retro-900 rounded-lg appearance-none cursor-pointer accent-retro-accent">
-          </div>
-
-          <div class="flex items-center gap-2">
-            <button id="btnDeleteStop" class="px-3 py-1.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 transition flex items-center gap-1.5 font-medium disabled:opacity-30 disabled:cursor-not-allowed" title="Удалить точку">
-              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-              <span>Удалить</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- БИБЛИОТЕКА ПРЕСЕТОВ С CANVAS-ПЛАШКАМИ И СВОТЧАМИ -->
-      <section class="bg-retro-850 border border-retro-700 rounded-xl p-4 sm:p-5 shadow-lg flex flex-col gap-3">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <div class="flex items-center gap-2">
-            <h2 class="text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-300">Каталог пресетов</h2>
-            <span id="presetCountBadge" class="text-xs px-2 py-0.5 rounded-full bg-retro-700 text-retro-accent font-mono font-semibold">—</span>
-          </div>
-          <button id="btnOpenSaveCustom" class="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 text-xs font-medium transition flex items-center gap-1 shadow-sm">
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            <span>+ Сохранить свой пресет</span>
-          </button>
-        </div>
-
-        <!-- Поиск -->
-        <div class="relative">
-          <input type="text" id="presetSearchInput" placeholder="Поиск палитры (Game Boy, NES, Magma, Sunset, Киберпанк...)" class="w-full bg-retro-900 border border-retro-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-retro-accent">
-          <svg class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-        </div>
-
-        <!-- Фильтры категорий -->
-        <div class="flex gap-1.5 overflow-x-auto pb-1 text-[11px] font-medium" id="presetCatFilters">
-          <button data-cat="all" class="cat-pill px-2.5 py-1 rounded-full bg-retro-accent text-retro-900 font-bold whitespace-nowrap">Все</button>
-          <button data-cat="custom" class="cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-amber-400 border border-amber-500/30 hover:bg-retro-700 whitespace-nowrap">⭐ Мои (<span id="customCountDisplay">0</span>)</button>
-          <button data-cat="retro" class="cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-slate-300 hover:bg-retro-700 whitespace-nowrap">Ретро Консоли</button>
-          <button data-cat="computers" class="cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-slate-300 hover:bg-retro-700 whitespace-nowrap">ЭВМ & CRT</button>
-          <button data-cat="pixel" class="cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-slate-300 hover:bg-retro-700 whitespace-nowrap">Pixel Art</button>
-          <button data-cat="scivis" class="cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-slate-300 hover:bg-retro-700 whitespace-nowrap">Тепловизоры</button>
-          <button data-cat="cyber" class="cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-slate-300 hover:bg-retro-700 whitespace-nowrap">Киберпанк</button>
-          <button data-cat="nature" class="cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-slate-300 hover:bg-retro-700 whitespace-nowrap">Природа</button>
-          <button data-cat="sky" class="cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-slate-300 hover:bg-retro-700 whitespace-nowrap">Закаты</button>
-          <button data-cat="metals" class="cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-slate-300 hover:bg-retro-700 whitespace-nowrap">Металлы</button>
-          <button data-cat="ui" class="cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-slate-300 hover:bg-retro-700 whitespace-nowrap">UI Стили</button>
-        </div>
-
-        <!-- Сетка пресетов со скроллом -->
-        <div id="presetsContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 max-h-[340px] overflow-y-auto pr-1"></div>
-      </section>
-
-      <!-- Настройки постеризации и гаммы -->
-      <section class="bg-retro-850 border border-retro-700 rounded-xl p-4 sm:p-5 shadow-lg grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Тип Интерполяции</label>
-          <select id="selectInterpolation" class="w-full bg-retro-800 border border-retro-600 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-retro-accent">
-            <option value="linear">Линейная (Linear)</option>
-            <option value="smoothstep">Сглаженная (Hermite / Smoothstep)</option>
-            <option value="easein">Ускорение (Ease In - x²)</option>
-            <option value="easeout">Замедление (Ease Out - 1-(1-x)²)</option>
-            <option value="stepped">Ступенчатая (Пошаговые полосы)</option>
-          </select>
-        </div>
-
-        <div>
-          <div class="flex justify-between items-center mb-1.5">
-            <label class="text-xs font-semibold uppercase tracking-wider text-slate-300">Постеризация (Шаги)</label>
-            <span id="stepsValDisplay" class="text-xs font-mono text-retro-accent">Выкл (Гладко)</span>
-          </div>
-          <input type="range" id="sliderSteps" min="1" max="32" value="1" class="w-full h-1.5 bg-retro-900 rounded-lg appearance-none cursor-pointer accent-retro-accent">
-          <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
-            <span>Гладко</span>
-            <span>4 (GB)</span>
-            <span>8</span>
-            <span>16</span>
-            <span>32</span>
-          </div>
-        </div>
-
-        <div class="flex items-center justify-between p-3 rounded-lg bg-retro-800 border border-retro-700/80">
-          <div>
-            <div class="text-xs font-semibold text-slate-200">Ретро-дизеринг (Dither)</div>
-            <div class="text-[11px] text-slate-400">Матрица Bayer 4x4 для ретро-текстур</div>
-          </div>
-          <input type="checkbox" id="checkDithering" class="w-4 h-4 text-retro-accent bg-retro-900 border-retro-600 rounded focus:ring-retro-accent">
-        </div>
-
-        <div class="flex items-center justify-between p-3 rounded-lg bg-retro-800 border border-retro-700/80">
-          <div>
-            <div class="text-xs font-semibold text-slate-200">Гамма-коррекция (sRGB)</div>
-            <div class="text-[11px] text-slate-400">Устраняет грязные серые полутона</div>
-          </div>
-          <input type="checkbox" id="checkGamma" checked class="w-4 h-4 text-retro-accent bg-retro-900 border-retro-600 rounded focus:ring-retro-accent">
-        </div>
-      </section>
-
-      <!-- Размеры текстуры -->
-      <section class="bg-retro-850 border border-retro-700 rounded-xl p-4 sm:p-5 shadow-lg flex flex-col gap-3">
-        <h2 class="text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-300">Размер текстуры (LUT Dimensions)</h2>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-          <div>
-            <label class="block text-slate-400 mb-1 font-mono">Ширина (X)</label>
-            <select id="selectWidth" class="w-full bg-retro-800 border border-retro-600 rounded-lg px-2.5 py-2 text-slate-200 focus:outline-none focus:border-retro-accent font-mono">
-              <option value="64">64 px</option>
-              <option value="128">128 px</option>
-              <option value="256" selected>256 px (Стандарт)</option>
-              <option value="512">512 px</option>
-              <option value="1024">1024 px</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-slate-400 mb-1 font-mono">Высота (Y)</label>
-            <select id="selectHeight" class="w-full bg-retro-800 border border-retro-600 rounded-lg px-2.5 py-2 text-slate-200 focus:outline-none focus:border-retro-accent font-mono">
-              <option value="1">1 px (1D LUT)</option>
-              <option value="8">8 px</option>
-              <option value="16" selected>16 px (Текстура)</option>
-              <option value="32">32 px</option>
-              <option value="64">64 px</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-slate-400 mb-1 font-mono">Стиль</label>
-            <div class="flex items-center h-9">
-              <label class="inline-flex items-center gap-1.5 cursor-pointer">
-                <input type="checkbox" id="checkPixelated" checked class="w-4 h-4 text-retro-accent bg-retro-900 border-retro-600 rounded">
-                <span class="text-slate-300 text-xs">Pixelated</span>
-              </label>
+        <section class="panel">
+          <div class="panel-head"><h2>// LUT Dimensions</h2></div>
+          <div class="panel-body">
+            <div class="grid-4">
+              <div>
+                <label class="field-label block" style="margin-bottom:6px">Ширина</label>
+                <select id="selectWidth">
+                  <option value="64">64 px</option>
+                  <option value="128">128 px</option>
+                  <option value="256" selected>256 px</option>
+                  <option value="512">512 px</option>
+                  <option value="1024">1024 px</option>
+                </select>
+              </div>
+              <div>
+                <label class="field-label block" style="margin-bottom:6px">Высота</label>
+                <select id="selectHeight">
+                  <option value="1">1 px</option>
+                  <option value="8">8 px</option>
+                  <option value="16" selected>16 px</option>
+                  <option value="32">32 px</option>
+                  <option value="64">64 px</option>
+                </select>
+              </div>
+              <div class="toggle-card">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                  <input type="checkbox" id="checkPixelated" checked>
+                  <span class="t">Pixelated</span>
+                </label>
+              </div>
+              <button type="button" class="btn-outline" id="btnQuickPng" style="width:100%">Экспорт PNG</button>
             </div>
           </div>
-          <div class="flex items-end">
-            <button id="btnQuickPng" class="w-full h-9 rounded-lg bg-retro-700 hover:bg-retro-600 text-slate-100 font-medium transition flex items-center justify-center gap-1.5">
-              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              <span>Экспорт PNG</span>
-            </button>
+        </section>
+      </div>
+
+      <div class="stack">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>// Предпросмотр</h2>
+            <div class="view-tabs">
+              <button type="button" data-view="ramp" class="view-tab-btn active">Текстура</button>
+              <button type="button" data-view="sphere" class="view-tab-btn">Сфера</button>
+              <button type="button" data-view="sprite" class="view-tab-btn">Пейзаж</button>
+              <button type="button" data-view="knight" class="view-tab-btn">Герой</button>
+              <button type="button" data-view="heightmap" class="view-tab-btn">Остров</button>
+              <button type="button" data-view="plasma" class="view-tab-btn">Плазма</button>
+            </div>
           </div>
-        </div>
-      </section>
-    </div>
-
-    <!-- ПРАВАЯ КОЛОНКА -->
-    <div class="lg:col-span-5 flex flex-col gap-5 sm:gap-6">
-
-      <!-- Предпросмотр -->
-      <section class="bg-retro-850 border border-retro-700 rounded-xl p-4 sm:p-5 shadow-lg flex flex-col gap-4">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <h2 class="text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-300">Предпросмотр</h2>
-          <div class="flex bg-retro-800 p-0.5 rounded-lg border border-retro-700 text-xs overflow-x-auto max-w-full">
-            <button data-view="ramp" class="view-tab-btn px-2.5 py-1 rounded-md transition font-medium bg-retro-700 text-white shadow whitespace-nowrap">Текстура</button>
-            <button data-view="sphere" class="view-tab-btn px-2.5 py-1 rounded-md transition font-medium text-slate-400 hover:text-white whitespace-nowrap">Сфера</button>
-            <button data-view="torus" class="view-tab-btn px-2.5 py-1 rounded-md transition font-medium text-slate-400 hover:text-white whitespace-nowrap">3D Тор</button>
-            <button data-view="sprite" class="view-tab-btn px-2.5 py-1 rounded-md transition font-medium text-slate-400 hover:text-white whitespace-nowrap">Пейзаж</button>
-            <button data-view="knight" class="view-tab-btn px-2.5 py-1 rounded-md transition font-medium text-slate-400 hover:text-white whitespace-nowrap">Герой</button>
-            <button data-view="heightmap" class="view-tab-btn px-2.5 py-1 rounded-md transition font-medium text-slate-400 hover:text-white whitespace-nowrap">Остров</button>
-            <button data-view="plasma" class="view-tab-btn px-2.5 py-1 rounded-md transition font-medium text-slate-400 hover:text-white whitespace-nowrap">Плазма FX</button>
+          <div class="panel-body">
+            <div class="preview-stage">
+              <canvas id="previewCanvas" class="pixelated"></canvas>
+              <div class="preview-meta">
+                <span id="previewInfo">Размер: 256 x 16 px</span>
+                <span id="previewZoom">Масштаб: 100%</span>
+              </div>
+            </div>
+            <p id="previewTipText">Текстура рампы высокого разрешения. Точно показывает сгенерированную LUT карту для шейдеров.</p>
           </div>
-        </div>
+        </section>
 
-        <div class="w-full aspect-[4/3] rounded-lg bg-retro-900 border border-retro-700 overflow-hidden relative flex items-center justify-center checkered-bg">
-          <canvas id="previewCanvas" class="max-w-full max-h-full block pixelated transition-all duration-150"></canvas>
-          <div class="absolute bottom-2 left-2 right-2 flex justify-between items-center text-[10px] text-slate-400 font-mono bg-retro-900/85 px-2 py-1 rounded backdrop-blur border border-retro-700/50">
-            <span id="previewInfo">Размер: 256 x 16 px</span>
-            <span id="previewZoom">Масштаб: 100%</span>
+        <section class="panel">
+          <div class="panel-head">
+            <h2>// Код</h2>
+            <div class="code-tabs">
+              <button type="button" id="tabCodeCss" class="code-tab-btn active">CSS</button>
+              <button type="button" id="tabCodeHex" class="code-tab-btn">HEX</button>
+              <button type="button" id="tabCodeGlsl" class="code-tab-btn">GLSL</button>
+            </div>
           </div>
-        </div>
-
-        <p class="text-[11px] text-slate-400 leading-relaxed" id="previewTipText">
-          Текстура рампы высокого разрешения. Точно показывает сгенерированную LUT карту для шейдеров.
-        </p>
-      </section>
-
-      <!-- Генерация кода -->
-      <section class="bg-retro-850 border border-retro-700 rounded-xl p-4 sm:p-5 shadow-lg flex flex-col gap-3">
-        <div class="flex items-center justify-between">
-          <h2 class="text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-300">Код для шейдеров и движков</h2>
-          <div class="flex gap-1">
-            <button id="tabCodeCss" class="code-tab-btn px-2 py-1 text-xs rounded bg-retro-700 text-retro-accent font-medium">CSS</button>
-            <button id="tabCodeHex" class="code-tab-btn px-2 py-1 text-xs rounded text-slate-400 hover:text-slate-200">HEX Array</button>
-            <button id="tabCodeGlsl" class="code-tab-btn px-2 py-1 text-xs rounded text-slate-400 hover:text-slate-200">GLSL / HLSL</button>
+          <div class="panel-body">
+            <div class="code-wrap">
+              <textarea id="codeOutput" readonly rows="7"></textarea>
+              <button type="button" class="btn-outline" id="btnCopyCode">Скопировать</button>
+            </div>
           </div>
-        </div>
-
-        <div class="relative group">
-          <textarea id="codeOutput" readonly rows="5" class="w-full bg-retro-900 border border-retro-700 rounded-lg p-3 font-mono text-xs text-retro-accent/90 resize-none focus:outline-none select-all"></textarea>
-          <button id="btnCopyCode" class="absolute top-2.5 right-2.5 px-2.5 py-1 rounded bg-retro-800 hover:bg-retro-700 border border-retro-600 text-slate-300 text-xs flex items-center gap-1 shadow transition active:scale-95">
-            <svg class="w-3.5 h-3.5 text-retro-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
-            <span>Скопировать</span>
-          </button>
-        </div>
-      </section>
-
+        </section>
+      </div>
     </div>
   </main>
 
-  <!-- МОДАЛЬНОЕ ОКНО СОХРАНЕНИЯ СВОЕГО ПРЕСЕТА -->
-  <div id="modalCustomPreset" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-retro-850 border border-retro-700 rounded-xl p-5 max-w-sm w-full shadow-2xl flex flex-col gap-4">
-      <div class="flex items-center justify-between">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <span>⭐</span> Сохранить в «Мои пресеты»
-        </h3>
-        <button id="btnCancelModal" class="text-slate-400 hover:text-white text-base">✕</button>
+  <div id="modalCustomPreset" class="modal hidden">
+    <div class="modal-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <h3>Сохранить пресет</h3>
+        <button type="button" class="btn-mini" id="btnCancelModal">✕</button>
       </div>
-      <p class="text-xs text-slate-300">Текущая цветовая рампа сохранится в память вашего браузера.</p>
+      <p>Текущая рампа сохранится в память браузера в раздел «Мои».</p>
       <div>
-        <label class="block text-[11px] font-mono text-slate-400 mb-1">Название палитры:</label>
-        <input type="text" id="inputCustomName" placeholder="Моя палитра" class="w-full bg-retro-900 border border-retro-600 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-retro-accent">
+        <label class="field-label block" style="margin-bottom:6px">Название</label>
+        <input type="text" id="inputCustomName" placeholder="Моя палитра" style="width:100%;padding:10px 12px">
       </div>
-      <div class="flex justify-end gap-2 mt-1">
-        <button id="btnCloseModalBtn" class="px-3 py-1.5 rounded-lg bg-retro-800 text-slate-300 text-xs hover:bg-retro-700">Отмена</button>
-        <button id="btnConfirmSaveCustom" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-retro-accentHover to-retro-accent text-retro-900 font-semibold text-xs shadow-md">Сохранить</button>
+      <div class="modal-actions">
+        <button type="button" class="btn-outline" id="btnCloseModalBtn">Отмена</button>
+        <button type="button" class="btn-primary" id="btnConfirmSaveCustom">Сохранить</button>
       </div>
     </div>
   </div>
 
-  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+  <div id="toastContainer"></div>
+  <footer>© 2026 Никита Бычков — RampStudio · Portfolio Tool</footer>
 
   <script>
-
-    function hslToHex(h, s, l) {
+function hslToHex(h, s, l) {
       h = ((h % 360) + 360) % 360;
       s = Math.max(0, Math.min(100, s)) / 100;
       l = Math.max(0, Math.min(100, l)) / 100;
@@ -437,10 +594,119 @@
       { id: 'matrix', name: 'Matrix Cyber Rain', cat: 'cyber', stops: [{ pos: 0.0, color: '#000d00' }, { pos: 0.3, color: '#003b00' }, { pos: 0.6, color: '#008000' }, { pos: 0.85, color: '#00e600' }, { pos: 1.0, color: '#ffffff' }] },
       { id: 'abyss', name: 'Deep Abyssal Ocean', cat: 'nature', stops: [{ pos: 0.0, color: '#010409' }, { pos: 0.3, color: '#061a3b' }, { pos: 0.6, color: '#0e4b97' }, { pos: 0.85, color: '#299fff' }, { pos: 1.0, color: '#a8e0ff' }] },
       { id: 'sunset', name: 'Golden Magic Hour', cat: 'sky', stops: [{ pos: 0.0, color: '#170700' }, { pos: 0.3, color: '#4d1600' }, { pos: 0.6, color: '#9e3400' }, { pos: 0.85, color: '#ffa834' }, { pos: 1.0, color: '#fff0b3' }] },
-      { id: 'gold', name: 'Pure Polished Gold', cat: 'metals', stops: [{ pos: 0.0, color: '#1f1603' }, { pos: 0.3, color: '#594109' }, { pos: 0.6, color: '#9e7413' }, { pos: 0.85, color: '#fae273' }, { pos: 1.0, color: '#fffbe0' }] }
+      { id: 'gold', name: 'Pure Polished Gold', cat: 'metals', stops: [{ pos: 0.0, color: '#1f1603' }, { pos: 0.3, color: '#594109' }, { pos: 0.6, color: '#9e7413' }, { pos: 0.85, color: '#fae273' }, { pos: 1.0, color: '#fffbe0' }] },
+      { id: 'gb-pocket-green', name: 'Game Boy Color Green', cat: 'retro', stops: [{ pos: 0.0, color: '#0f1a0f' }, { pos: 0.33, color: '#1f4a1f' }, { pos: 0.66, color: '#4caa4c' }, { pos: 1.0, color: '#9dff9d' }] },
+      { id: 'atari-2600', name: 'Atari 2600 Warm', cat: 'retro', stops: [{ pos: 0.0, color: '#1a0a00' }, { pos: 0.3, color: '#6b2a00' }, { pos: 0.6, color: '#c06010' }, { pos: 0.85, color: '#f0a040' }, { pos: 1.0, color: '#ffe8b0' }] },
+      { id: 'msx-blue', name: 'MSX Soft Blue', cat: 'computers', stops: [{ pos: 0.0, color: '#000018' }, { pos: 0.3, color: '#001870' }, { pos: 0.6, color: '#2858c8' }, { pos: 0.85, color: '#68a0f0' }, { pos: 1.0, color: '#d0e8ff' }] },
+      { id: 'amiga-workbench', name: 'Amiga Workbench', cat: 'computers', stops: [{ pos: 0.0, color: '#0055aa' }, { pos: 0.35, color: '#0077cc' }, { pos: 0.7, color: '#55aaff' }, { pos: 1.0, color: '#ffffff' }] },
+      { id: 'lospec500', name: 'Lospec Soft Pastel', cat: 'pixel', stops: [{ pos: 0.0, color: '#2b2135' }, { pos: 0.25, color: '#4a4068' }, { pos: 0.5, color: '#8b6aa8' }, { pos: 0.75, color: '#d4a5c8' }, { pos: 1.0, color: '#fff0e8' }] },
+      { id: 'apollo', name: 'Apollo Pixel', cat: 'pixel', stops: [{ pos: 0.0, color: '#172038' }, { pos: 0.25, color: '#253a5e' }, { pos: 0.5, color: '#c65197' }, { pos: 0.75, color: '#ffb570' }, { pos: 1.0, color: '#fff6eb' }] },
+      { id: 'plasma', name: 'Plasma Scientific', cat: 'scivis', stops: [{ pos: 0.0, color: '#0d0887' }, { pos: 0.25, color: '#7e03a8' }, { pos: 0.5, color: '#cc4778' }, { pos: 0.75, color: '#f89540' }, { pos: 1.0, color: '#f0f921' }] },
+      { id: 'turbo', name: 'Turbo Heatmap', cat: 'scivis', stops: [{ pos: 0.0, color: '#30123b' }, { pos: 0.25, color: '#466be3' }, { pos: 0.5, color: '#28bbec' }, { pos: 0.75, color: '#a4fc3c' }, { pos: 1.0, color: '#eaea5d' }] },
+      { id: 'neon-city', name: 'Neon City Night', cat: 'cyber', stops: [{ pos: 0.0, color: '#050510' }, { pos: 0.3, color: '#0a2060' }, { pos: 0.55, color: '#00c8ff' }, { pos: 0.8, color: '#ff2bd6' }, { pos: 1.0, color: '#ffe9ff' }] },
+      { id: 'acid-lab', name: 'Portfolio Acid Lab', cat: 'cyber', stops: [{ pos: 0.0, color: '#070709' }, { pos: 0.35, color: '#1a2a00' }, { pos: 0.65, color: '#7a9a00' }, { pos: 0.85, color: '#c9ff19' }, { pos: 1.0, color: '#f4ffb0' }] },
+      { id: 'forest', name: 'Deep Forest Canopy', cat: 'nature', stops: [{ pos: 0.0, color: '#061208' }, { pos: 0.3, color: '#143820' }, { pos: 0.6, color: '#2f7a3a' }, { pos: 0.85, color: '#7ecf6a' }, { pos: 1.0, color: '#d8ffc8' }] },
+      { id: 'lava', name: 'Volcanic Magma Flow', cat: 'nature', stops: [{ pos: 0.0, color: '#0a0300' }, { pos: 0.3, color: '#4a0a00' }, { pos: 0.55, color: '#b02000' }, { pos: 0.8, color: '#ff6a00' }, { pos: 1.0, color: '#ffe080' }] },
+      { id: 'aurora', name: 'Aurora Borealis', cat: 'sky', stops: [{ pos: 0.0, color: '#020618' }, { pos: 0.25, color: '#0a2850' }, { pos: 0.5, color: '#0d6b5c' }, { pos: 0.75, color: '#3ce0a0' }, { pos: 1.0, color: '#d8fff0' }] },
+      { id: 'dusk-violet', name: 'Violet City Dusk', cat: 'sky', stops: [{ pos: 0.0, color: '#0c0618' }, { pos: 0.3, color: '#2a0a48' }, { pos: 0.55, color: '#6a2a90' }, { pos: 0.8, color: '#e07050' }, { pos: 1.0, color: '#ffd8a0' }] },
+      { id: 'steel', name: 'Brushed Steel', cat: 'metals', stops: [{ pos: 0.0, color: '#0e1014' }, { pos: 0.3, color: '#2a3038' }, { pos: 0.55, color: '#5a6570' }, { pos: 0.8, color: '#a8b2bc' }, { pos: 1.0, color: '#eef2f6' }] },
+      { id: 'copper', name: 'Oxidized Copper', cat: 'metals', stops: [{ pos: 0.0, color: '#0f1a16' }, { pos: 0.3, color: '#1f4a40' }, { pos: 0.55, color: '#3a8a6a' }, { pos: 0.8, color: '#b07040' }, { pos: 1.0, color: '#e8c090' }] },
+      { id: 'ui-acid', name: 'UI Acid Accent', cat: 'ui', stops: [{ pos: 0.0, color: '#121217' }, { pos: 0.4, color: '#2a2a18' }, { pos: 0.7, color: '#8aaa10' }, { pos: 1.0, color: '#c9ff19' }] },
+      { id: 'ui-cyan', name: 'UI Cyan Panel', cat: 'ui', stops: [{ pos: 0.0, color: '#0a1014' }, { pos: 0.4, color: '#0e3040' }, { pos: 0.75, color: '#00b8c8' }, { pos: 1.0, color: '#00f0ff' }] },
+      { id: 'ui-warn', name: 'UI Warning Ramp', cat: 'ui', stops: [{ pos: 0.0, color: '#14100a' }, { pos: 0.4, color: '#402000' }, { pos: 0.75, color: '#c86000' }, { pos: 1.0, color: '#ff8a00' }] }
     ];
 
-    const ALL_PRESETS = [...BASE_PRESETS];
+    function buildGeneratedPresets(targetTotal, curated) {
+      const cats = ['retro', 'computers', 'pixel', 'scivis', 'cyber', 'nature', 'sky', 'metals', 'ui'];
+      const families = [
+        { key: 'mono', label: 'Mono', cat: 'pixel', mode: 'mono' },
+        { key: 'analog', label: 'Analog', cat: 'nature', mode: 'analog' },
+        { key: 'comp', label: 'Complement', cat: 'ui', mode: 'comp' },
+        { key: 'heat', label: 'Heat', cat: 'scivis', mode: 'heat' },
+        { key: 'neon', label: 'Neon', cat: 'cyber', mode: 'neon' },
+        { key: 'pastel', label: 'Pastel', cat: 'sky', mode: 'pastel' },
+        { key: 'earth', label: 'Earth', cat: 'nature', mode: 'earth' },
+        { key: 'metal', label: 'Metal', cat: 'metals', mode: 'metal' },
+        { key: 'crt', label: 'CRT Hue', cat: 'computers', mode: 'crt' },
+        { key: 'arcade', label: 'Arcade', cat: 'retro', mode: 'arcade' }
+      ];
+
+      const makeStops = (mode, hue, index) => {
+        const stops = [];
+        const count = 4 + (index % 3); // 4..6
+        for (let i = 0; i < count; i++) {
+          const t = i / (count - 1);
+          let h = hue;
+          let s = 70;
+          let l = 8 + t * 78;
+
+          if (mode === 'mono') {
+            s = 8 + (index % 20);
+            l = 5 + t * 90;
+          } else if (mode === 'analog') {
+            h = (hue + (t - 0.5) * 48) % 360;
+            s = 55 + t * 25;
+            l = 12 + t * 70;
+          } else if (mode === 'comp') {
+            h = t < 0.5 ? hue : (hue + 180) % 360;
+            s = 65 + t * 20;
+            l = 10 + t * 72;
+          } else if (mode === 'heat') {
+            h = (hue * 0.15 + t * 70) % 360;
+            s = 80;
+            l = 6 + t * 78;
+          } else if (mode === 'neon') {
+            h = (hue + t * 120) % 360;
+            s = 90;
+            l = 8 + t * 62;
+          } else if (mode === 'pastel') {
+            h = (hue + t * 40) % 360;
+            s = 35 + t * 20;
+            l = 55 + t * 35;
+          } else if (mode === 'earth') {
+            h = (22 + hue * 0.08 + t * 35) % 360;
+            s = 40 + t * 25;
+            l = 10 + t * 65;
+          } else if (mode === 'metal') {
+            s = 8 + t * 18;
+            l = 8 + t * 82;
+            h = (hue + t * 12) % 360;
+          } else if (mode === 'crt') {
+            h = hue;
+            s = 70 + t * 20;
+            l = 4 + t * 76;
+          } else if (mode === 'arcade') {
+            h = (hue + i * 55) % 360;
+            s = 75;
+            l = 15 + t * 65;
+          }
+
+          stops.push({
+            pos: Math.round(t * 1000) / 1000,
+            color: hslToHex(h, s, l)
+          });
+        }
+        return stops;
+      };
+
+      const needed = Math.max(0, targetTotal - curated.length);
+      const out = [];
+      for (let i = 0; i < needed; i++) {
+        const family = families[i % families.length];
+        const hue = (i * 17 + family.key.length * 23) % 360;
+        const cat = cats[i % cats.length];
+        const n = String(i + 1).padStart(3, '0');
+        out.push({
+          id: `gen-${family.key}-${n}`,
+          name: `${family.label} ${n} · H${hue}`,
+          cat,
+          stops: makeStops(family.mode, hue, i)
+        });
+      }
+      return out;
+    }
+
+    const ALL_PRESETS = [...BASE_PRESETS, ...buildGeneratedPresets(999, BASE_PRESETS)];
 
     
 
@@ -621,14 +887,11 @@
       state.stops.forEach(stop => {
         const isSelected = stop.id === state.selectedStopId;
         const marker = document.createElement('div');
-        marker.className = `stop-marker absolute top-0 -translate-x-1/2 w-8 h-9 pointer-events-auto cursor-grab active:cursor-grabbing flex flex-col items-center group z-10 transition-transform ${isSelected ? 'z-20 scale-110' : 'hover:scale-105'}`;
+        marker.className = 'stop-marker' + (isSelected ? ' is-selected' : '');
         marker.style.left = `${stop.pos * 100}%`;
         marker.dataset.id = stop.id;
 
-        marker.innerHTML = `
-          <div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] ${isSelected ? 'border-b-retro-accent drop-shadow-[0_0_5px_rgba(56,239,125,0.9)]' : 'border-b-white group-hover:border-b-slate-300'}"></div>
-          <div class="w-5 h-5 rounded-full border-2 ${isSelected ? 'border-retro-accent shadow-lg shadow-retro-accent/50' : 'border-white'} shadow mt-0.5" style="background-color: ${stop.color};"></div>
-        `;
+        marker.innerHTML = '<div class="stop-arrow"></div><div class="stop-dot" style="background-color:' + stop.color + '"></div>';
 
         marker.addEventListener('pointerdown', (e) => {
           e.stopPropagation();
@@ -746,7 +1009,6 @@
     function renderPreview() {
       if (state.previewMode === 'ramp') renderRampTexture();
       else if (state.previewMode === 'sphere') renderCelSphere();
-      else if (state.previewMode === 'torus') render3DTorus();
       else if (state.previewMode === 'sprite') renderPixelLandscape();
       else if (state.previewMode === 'knight') renderKnightSprite();
       else if (state.previewMode === 'heightmap') renderIslandHeightmap();
@@ -955,21 +1217,32 @@
       previewCtx.putImageData(imgData, 0, 0);
     }
 
+    const PREVIEW_TIPS = {
+      ramp: 'Текстура рампы высокого разрешения. Точно показывает сгенерированную LUT карту для шейдеров.',
+      sphere: 'Cel/toon shading на сфере — проверка рампы как карты освещения.',
+      sprite: 'Пиксельный пейзаж в разрешении Game Boy.',
+      knight: 'Palette swap на спрайте героя.',
+      heightmap: 'Процедурный остров: рампа как height/biome coloring.',
+      plasma: 'Ретро-плазма demoscene FX.'
+    };
+
     document.querySelectorAll('.view-tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.view-tab-btn').forEach(b => {
-          b.className = 'view-tab-btn px-2.5 py-1 rounded-md transition font-medium text-slate-400 hover:text-white whitespace-nowrap';
+          b.className = 'view-tab-btn';
         });
-        btn.className = 'view-tab-btn px-2.5 py-1 rounded-md transition font-medium bg-retro-700 text-white shadow whitespace-nowrap';
+        btn.className = 'view-tab-btn active';
         state.previewMode = btn.dataset.view;
-        previewTipText.textContent = PREVIEW_TIPS[state.previewMode] || "";
+        if (previewTipText) {
+          previewTipText.textContent = PREVIEW_TIPS[state.previewMode] || '';
+        }
         renderPreview();
       });
     });
 
     function animationLoop() {
       state.animTimer += 0.04;
-      if (['plasma', 'torus', 'sphere'].includes(state.previewMode)) {
+      if (['plasma', 'sphere'].includes(state.previewMode)) {
         renderPreview();
       }
       requestAnimationFrame(animationLoop);
@@ -1011,9 +1284,9 @@
       state.activeCodeTab = tab;
       Object.keys(codeTabBtns).forEach(k => {
         if (k === tab) {
-          codeTabBtns[k].className = 'code-tab-btn px-2 py-1 text-xs rounded bg-retro-700 text-retro-accent font-medium';
+          codeTabBtns[k].className = 'code-tab-btn active';
         } else {
-          codeTabBtns[k].className = 'code-tab-btn px-2 py-1 text-xs rounded text-slate-400 hover:text-slate-200';
+          codeTabBtns[k].className = 'code-tab-btn';
         }
       });
       updateCodeOutput();
@@ -1049,47 +1322,38 @@
 
       filtered.forEach(p => {
         const card = document.createElement('div');
-        card.className = 'group text-left p-2.5 rounded-lg bg-retro-800 hover:bg-retro-700/80 border border-retro-700 hover:border-slate-400 transition flex flex-col gap-2 cursor-pointer relative';
+        card.className = 'preset-card';
 
         const sorted = [...p.stops].sort((a, b) => a.pos - b.pos);
 
-        // 1. Аппаратно отрисованная полоса градиента на Canvas
-        const canvasStrip = document.createElement('canvas');
-        canvasStrip.className = 'w-full h-5 rounded border border-retro-600 block shadow-inner group-hover:scale-[1.02] transition-transform';
-        canvasStrip.width = 160;
-        canvasStrip.height = 20;
-        const cctx = canvasStrip.getContext('2d');
-        const grad = cctx.createLinearGradient(0, 0, 160, 0);
-        sorted.forEach(s => {
-          grad.addColorStop(Math.max(0, Math.min(1, s.pos)), s.color);
-        });
-        cctx.fillStyle = grad;
-        cctx.fillRect(0, 0, 160, 20);
+        const strip = document.createElement('div');
+        strip.className = 'preset-strip';
+        strip.style.background = `linear-gradient(90deg, ${sorted
+          .map(s => `${s.color} ${(Math.max(0, Math.min(1, s.pos)) * 100).toFixed(1)}%`)
+          .join(', ')})`;
 
-        // 2. Блок чистых цветовых свотчей (кубиков)
         const swatchesRow = document.createElement('div');
-        swatchesRow.className = 'flex items-center gap-1 w-full overflow-hidden';
+        swatchesRow.className = 'preset-swatches';
         sorted.forEach(s => {
           const swatch = document.createElement('div');
-          swatch.className = 'h-2 flex-1 rounded-sm border border-black/40 shadow-sm';
+          swatch.className = 'preset-swatch';
           swatch.style.backgroundColor = s.color;
           swatch.title = s.color;
           swatchesRow.appendChild(swatch);
         });
 
-        // 3. Блок заголовка
         const titleRow = document.createElement('div');
-        titleRow.className = 'flex items-center justify-between w-full mt-0.5';
+        titleRow.className = 'preset-title-row';
 
         const titleText = document.createElement('div');
-        titleText.className = 'truncate text-[11px] font-medium text-slate-300 group-hover:text-white';
+        titleText.className = 'preset-title';
         titleText.textContent = p.name;
         titleText.title = p.name;
         titleRow.appendChild(titleText);
 
         if (p.cat === 'custom') {
           const delBtn = document.createElement('button');
-          delBtn.className = 'text-red-400 hover:text-red-300 px-1 text-xs font-bold';
+          delBtn.className = 'preset-del';
           delBtn.textContent = '✕';
           delBtn.title = 'Удалить пресет';
           delBtn.addEventListener('click', (e) => {
@@ -1102,7 +1366,7 @@
           titleRow.appendChild(delBtn);
         }
 
-        card.appendChild(canvasStrip);
+        card.appendChild(strip);
         card.appendChild(swatchesRow);
         card.appendChild(titleRow);
 
@@ -1133,9 +1397,9 @@
     document.querySelectorAll('.cat-pill').forEach(pill => {
       pill.addEventListener('click', () => {
         document.querySelectorAll('.cat-pill').forEach(b => {
-          b.className = 'cat-pill px-2.5 py-1 rounded-full bg-retro-800 text-slate-300 hover:bg-retro-700 whitespace-nowrap';
+          b.className = 'cat-pill';
         });
-        pill.className = 'cat-pill px-2.5 py-1 rounded-full bg-retro-accent text-retro-900 font-bold whitespace-nowrap';
+        pill.className = 'cat-pill active';
         state.activeCategory = pill.dataset.cat;
         renderPresetsCatalog();
       });
@@ -1271,8 +1535,8 @@
 
     function showToast(msg) {
       const toast = document.createElement('div');
-      toast.className = 'toast-anim pointer-events-auto bg-retro-800 border border-retro-600 text-slate-100 text-xs px-3.5 py-2 rounded-lg shadow-xl flex items-center gap-2';
-      toast.innerHTML = `<span class="w-2 h-2 rounded-full bg-retro-accent"></span><span>${msg}</span>`;
+      toast.className = 'toast-item toast-anim';
+      toast.textContent = msg;
       toastContainer.appendChild(toast);
       setTimeout(() => {
         toast.style.opacity = '0';
@@ -1305,6 +1569,43 @@
       renderMainGradientBar();
       renderStopsMarkers();
     });
+  
+
+    (function initBackground() {
+      const canvas = document.getElementById('bg-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const particles = Array.from({ length: 80 }, () => ({
+        x: Math.random(), y: Math.random(),
+        radius: Math.random() * 1.5 + 0.2,
+        speed: Math.random() * 0.00012 + 0.00003
+      }));
+      function render() {
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const cw = Math.floor(width * pixelRatio);
+        const ch = Math.floor(height * pixelRatio);
+        if (canvas.width !== cw || canvas.height !== ch) {
+          canvas.width = cw; canvas.height = ch;
+          canvas.style.width = width + 'px';
+          canvas.style.height = height + 'px';
+        }
+        ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        ctx.clearRect(0, 0, width, height);
+        ctx.globalAlpha = 0.25;
+        ctx.fillStyle = '#c9ff19';
+        for (const p of particles) {
+          p.y -= p.speed * 16;
+          if (p.y < -0.02) p.y = 1.02;
+          ctx.beginPath();
+          ctx.arc(p.x * width, p.y * height, p.radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        requestAnimationFrame(render);
+      }
+      render();
+    })();
   </script>
 </body>
 </html>
