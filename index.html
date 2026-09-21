@@ -1319,8 +1319,8 @@ button,
           <div class="lb-head">
             <h3>ТАБЛИЦА ИГРОКОВ</h3>
             <p>
-              Имя необязательно — без него ты всё равно в таблице как <b>Гость-XXXX</b>.
-              Город определяется по IP приблизительно.
+              Имя необязательно — без него ты в таблице как <b>Гость-XXXX</b>.
+              Таблица онлайн (Firebase) и сохраняется при обновлении сайта. Город по IP приблизительно.
             </p>
           </div>
           <div class="lb-identity">
@@ -1329,6 +1329,7 @@ button,
           </div>
           <div class="lb-you" id="lbYou">Ты: —</div>
           <div class="lb-meta" id="lbMeta">
+            <span class="lb-chip">Сеть: <b id="chipOnline">…</b></span>
             <span class="lb-chip">Устройство: <b id="chipDevice">…</b></span>
             <span class="lb-chip">Город: <b id="chipCity">…</b></span>
           </div>
@@ -1424,6 +1425,7 @@ button,
 <footer>© 2026 Никита Бычков — Unity Developer · Tech Artist · 3D Generalist</footer>
 <div class="toast" id="toast">СКОПИРОВАНО!</div>
 
+<script src="leaderboard-config.js"></script>
 <script>
 (() => {
   'use strict';
@@ -1458,6 +1460,7 @@ button,
     lbEmpty: document.getElementById('lbEmpty'),
     chipDevice: document.getElementById('chipDevice'),
     chipCity: document.getElementById('chipCity'),
+    chipOnline: document.getElementById('chipOnline'),
     mutateOverlay: document.getElementById('mutateOverlay'),
     mutateTimer: document.getElementById('mutateTimer'),
     goalEarn: document.getElementById('goalEarn'),
@@ -1995,9 +1998,114 @@ button,
 
   function saveLeaderboard(rows) {
     try {
-      localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(rows.slice(0, 50)));
-    } catch (error) {
-           }
+      localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(rows.slice(0, 100)));
+    } catch (_) {}
+  }
+
+  function getFirebaseUrl() {
+    try {
+      const url = String(window.LAB_LEADERBOARD && window.LAB_LEADERBOARD.url || '').replace(/\/$/, '');
+      return url || '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function setOnlineChip(text) {
+    if (elements.chipOnline) {
+      elements.chipOnline.textContent = text;
+    }
+  }
+
+  function normalizeOnlineRow(row) {
+    if (!row || !row.id) return null;
+    return {
+      id: String(row.id),
+      name: String(row.name || '').slice(0, 32),
+      evo: Math.max(0, Math.floor(Number(row.evo) || 0)),
+      device: String(row.device || '—').slice(0, 64),
+      city: String(row.city || '—').slice(0, 64),
+      updatedAt: Number(row.updatedAt) || 0
+    };
+  }
+
+  let onlineSyncTimer = 0;
+  let onlineSyncBusy = false;
+  let lastOnlinePushAt = 0;
+
+  function scheduleOnlineSync(force = false) {
+    if (!getFirebaseUrl()) {
+      setOnlineChip('локально');
+      return;
+    }
+
+    window.clearTimeout(onlineSyncTimer);
+    onlineSyncTimer = window.setTimeout(() => {
+      syncLeaderboardOnline(force).catch(() => {
+        setOnlineChip('офлайн');
+      });
+    }, force ? 50 : 1500);
+  }
+
+  async function syncLeaderboardOnline(force = false) {
+    const base = getFirebaseUrl();
+    if (!base || onlineSyncBusy) return;
+    if (!force && Date.now() - lastOnlinePushAt < 8000) return;
+
+    onlineSyncBusy = true;
+    setOnlineChip('синк…');
+
+    try {
+      const entry = {
+        id: player.id,
+        name: getPlayerDisplayName(),
+        evo: Math.max(0, Math.floor(state.totalEarned)),
+        device: player.device || deviceInfo.label || '—',
+        city: player.city || networkInfo.city || '—',
+        updatedAt: Date.now()
+      };
+
+      const putRes = await fetch(`${base}/players/${encodeURIComponent(entry.id)}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry)
+      });
+      if (!putRes.ok) throw new Error('put failed');
+
+      const getRes = await fetch(`${base}/players.json`, { cache: 'no-store' });
+      if (!getRes.ok) throw new Error('get failed');
+      const data = await getRes.json();
+      const remote = data && typeof data === 'object'
+        ? Object.values(data).map(normalizeOnlineRow).filter(Boolean)
+        : [];
+
+      const byId = new Map();
+      loadLeaderboard().forEach(row => byId.set(row.id, row));
+      remote.forEach(row => {
+        const prev = byId.get(row.id);
+        if (!prev) {
+          byId.set(row.id, row);
+          return;
+        }
+        byId.set(row.id, {
+          ...row,
+          evo: Math.max(prev.evo, row.evo),
+          updatedAt: Math.max(prev.updatedAt, row.updatedAt)
+        });
+      });
+
+      const merged = Array.from(byId.values()).sort(
+        (a, b) => b.evo - a.evo || b.updatedAt - a.updatedAt
+      );
+      saveLeaderboard(merged);
+      lastOnlinePushAt = Date.now();
+      setOnlineChip(`онлайн · ${merged.length}`);
+      renderLeaderboard();
+    } catch (_) {
+      setOnlineChip('офлайн');
+    } finally {
+      onlineSyncBusy = false;
+    }
   }
 
   function updateMetaChips() {
@@ -2026,13 +2134,14 @@ button,
 
     if (index >= 0) {
       rows[index] = entry;
-    } else if (evo > 0 || player.name) {
+    } else {
       rows.push(entry);
     }
 
     rows.sort((a, b) => b.evo - a.evo || b.updatedAt - a.updatedAt);
     saveLeaderboard(rows);
     renderLeaderboard();
+    scheduleOnlineSync(false);
   }
 
   function escapeHtml(value) {
@@ -2103,6 +2212,7 @@ button,
     });
     if (next === 'players') {
       renderLeaderboard();
+      scheduleOnlineSync(true);
     }
   }
 
@@ -3291,10 +3401,12 @@ button,
 
   player.device = deviceInfo.label;
   updateMetaChips();
+  setOnlineChip(getFirebaseUrl() ? 'подключение…' : 'локально');
   initializeThree();
   renderUI(true);
   syncLeaderboardEntry();
   refreshNetworkProfile();
+  setInterval(() => scheduleOnlineSync(true), 60000);
   renderBackground();
   requestAnimationFrame(updateGame);
 })();
