@@ -1,7 +1,5 @@
-/* Online leaderboard (Firebase Realtime Database).
-   Paste your database URL below after creating the DB (test mode).
-   Example: https://YOUR-ID-default-rtdb.europe-west1.firebasedatabase.app */
+/* Online leaderboard (Firebase Realtime Database). */
 window.LAB_LEADERBOARD = {
   provider: 'firebase',
-  url: ''
+  url: 'https://nikita-e8600-default-rtdb.europe-west1.firebasedatabase.app'
 };
