@@ -23,6 +23,6 @@ Then open [http://127.0.0.1:5500](http://127.0.0.1:5500).
 
 The players table is stored in the cloud ([KVdb](https://kvdb.io)), not in GitHub Pages files.
 
-**One-time activation:** open [https://kvdb.io/login](https://kvdb.io/login) and verify `nikita.bychkov.93@bk.ru` (activation email was sent when the bucket was created). Until then the UI shows «нужна активация» and keeps a local cache.
+**One-time activation:** open [https://kvdb.io/login](https://kvdb.io/login) and verify `dilda777@bk.ru` (check spam). Until then the UI shows «нужна активация».
 
 Config: `leaderboard-config.js`
