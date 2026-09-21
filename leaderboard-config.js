@@ -1,8 +1,8 @@
 /* Online leaderboard — survives GitHub Pages redeploys.
    Backend: KVdb (https://kvdb.io).
-   Activate once: open https://kvdb.io/login and verify dilda777@bk.ru */
+   Activate once: open https://kvdb.io/login and verify megsladonkkdlm@gmail.com */
 window.LAB_LEADERBOARD = {
   provider: 'kvdb',
-  bucket: '2ApMnNWy1PUUw3McnBfgxy',
-  writeKey: 'NbLabWrite_nn3t6jdn'
+  bucket: '3oY9yWWeqr8EuwHSmAuRKW',
+  writeKey: 'NbLabWrite_t21bxok7'
 };
