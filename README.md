@@ -21,8 +21,6 @@ Then open [http://127.0.0.1:5500](http://127.0.0.1:5500).
 
 ## Online leaderboard
 
-The players table is stored in the cloud ([KVdb](https://kvdb.io)), not in GitHub Pages files.
+Stored in **Firebase Realtime Database** (survives redeploys).
 
-**One-time activation:** open [https://kvdb.io/login](https://kvdb.io/login) and verify `megsladonkkdlm@gmail.com` (check spam/Promotions). Until then the UI shows «нужна активация».
-
-Config: `leaderboard-config.js`
+Setup: see [LEADERBOARD_SETUP.md](LEADERBOARD_SETUP.md) — create a free Firebase project with Google, paste the DB URL into `leaderboard-config.js`.

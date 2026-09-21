@@ -1,0 +1,11 @@
+{
+  "rules": {
+    "players": {
+      ".read": true,
+      ".write": true,
+      "$id": {
+        ".validate": "newData.hasChildren(['id', 'name', 'evo', 'updatedAt']) && newData.child('evo').isNumber() && newData.child('evo').val() >= 0 && newData.child('evo').val() < 1000000000"
+      }
+    }
+  }
+}
